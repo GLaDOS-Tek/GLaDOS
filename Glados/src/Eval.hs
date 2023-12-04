@@ -49,4 +49,7 @@ sexprToAST (ExprList ((StrExpr "define" line):xs)) = case (output) of
                                                 Error _ _ -> output
                                                 _ -> output
                                                 where output = astKeyWordDefine xs
+sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
+                                        (StrExpr funcName _) -> Call funcName (map sexprToAST args)
+                                        _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
