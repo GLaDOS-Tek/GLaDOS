@@ -53,3 +53,24 @@ sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
                                         (StrExpr funcName _) -> Call funcName (map sexprToAST args)
                                         _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
+
+sumAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
+sumAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs + rhs
+sumAst _ _ = Nothing
+
+mulAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
+mulAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs * rhs
+mulAst _ _ = Nothing
+
+subAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
+subAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs - rhs
+subAst _ _ = Nothing
+
+evalAst :: Ast -> Maybe Ast
+evalAst (Number num) = Just (Number num)
+evalAst (Symbol sym) = Just (Symbol sym)
+evalAst (Boolean bool) = Just (Boolean bool)
+evalAst (Call "+" (x:y:_)) = sumAst (evalAst x) (evalAst y)
+evalAst (Call "*" (x:y:_)) = mulAst (evalAst x) (evalAst y)
+evalAst (Call "-" (x:y:_)) = subAst (evalAst x) (evalAst y)
+evalAst _ = Nothing
