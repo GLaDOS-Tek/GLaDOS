@@ -6,6 +6,7 @@ data SExpr = IntExpr Int Int -- second int is the line
     deriving (Show, Read)
 
 data Ast = Define String Ast
+    | Cond Ast Ast Ast
     | Number Int
     | Symbol String
     | Boolean Bool
@@ -22,6 +23,7 @@ instance Show Ast where
     show (Call str asts) = "Call " ++ str ++ "(" ++ show asts ++ ")"
     show (AstList asts) = "AstList [" ++ show asts ++ "]"
     show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
+    show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
 
 astKeyWordDefine :: [SExpr] -> Ast
 astKeyWordDefine ([]) = Error "missing definition to define statement" (-1)
@@ -49,6 +51,8 @@ sexprToAST (ExprList ((StrExpr "define" line):xs)) = case (output) of
                                                 Error _ _ -> output
                                                 _ -> output
                                                 where output = astKeyWordDefine xs
+sexprToAST (ExprList [StrExpr "if" _, condition, trueBranch, falseBranch]) =
+                                            Cond (sexprToAST condition) (sexprToAST trueBranch) (sexprToAST falseBranch)
 sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
                                         (StrExpr funcName _) -> Call funcName (map sexprToAST args)
                                         _ -> Error "Invalid function application" (-1)
