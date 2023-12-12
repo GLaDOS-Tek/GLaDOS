@@ -20,8 +20,8 @@ instance Show Ast where
     show (Number i) = show i
     show (Symbol s) = s
     show (Boolean b) = show b
-    show (Call str asts) = "Call " ++ str ++ "(" ++ show asts ++ ")"
-    show (AstList asts) = "AstList [" ++ show asts ++ "]"
+    show (Call str asts) = "Call " ++ str ++ " (" ++ show asts ++ ")"
+    show (AstList asts) = "AstList " ++ show asts
     show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
     show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
 
@@ -58,23 +58,28 @@ sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
                                         _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
 
-sumAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
-sumAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs + rhs
-sumAst _ _ = Nothing
+primitives :: [(String, Ast -> Ast)]
+primitives = [("+", numericOp (+)),
+              ("-", numericOp (-)),
+              ("*", numericOp (*)),
+              ("/", numericOp div)]
 
-mulAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
-mulAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs * rhs
-mulAst _ _ = Nothing
+apply :: String -> Ast -> Ast
+apply op params = case lookup op primitives of
+                    Just func -> func params
+                    Nothing -> Error ("Function '" ++ op ++ "' is not a primitive.") 0
 
-subAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
-subAst (Just (Number lhs)) (Just (Number rhs)) = Just $ Number $ lhs - rhs
-subAst _ _ = Nothing
+extractNumber :: Ast -> Int
+extractNumber (Number n) = n
+extractNumber _ = 0
 
-evalAst :: Ast -> Maybe Ast
-evalAst (Number num) = Just (Number num)
-evalAst (Symbol sym) = Just (Symbol sym)
-evalAst (Boolean bool) = Just (Boolean bool)
-evalAst (Call "+" (x:y:_)) = sumAst (evalAst x) (evalAst y)
-evalAst (Call "*" (x:y:_)) = mulAst (evalAst x) (evalAst y)
-evalAst (Call "-" (x:y:_)) = subAst (evalAst x) (evalAst y)
-evalAst _ = Nothing
+numericOp :: (Int -> Int -> Int) -> Ast -> Ast
+numericOp op (AstList list) = Number (foldl1 op (map extractNumber list))
+numericOp _ _ = Error "" 0
+
+evalAst :: Ast -> Ast
+evalAst (Number num) = Number num
+evalAst (Symbol sym) = Symbol sym
+evalAst (Boolean bool) = Boolean bool
+evalAst (Call op args) = apply op (AstList (map evalAst args))
+evalAst _ = Error "" 0
