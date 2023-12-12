@@ -2,11 +2,13 @@ module Eval (SExpr(..), Ast(..), sexprToAST) where
 
 data SExpr = IntExpr Int Int -- second int is the line
     | StrExpr String Int
+    | SymbolExpr String Int
     | ExprList [SExpr]
     deriving (Show, Read)
 
 data Ast = Define String Ast
     | Cond Ast Ast Ast
+    | Defun String [Ast] [Ast]
     | Number Int
     | Symbol String
     | Boolean Bool
@@ -24,13 +26,14 @@ instance Show Ast where
     show (AstList asts) = "AstList [" ++ show asts ++ "]"
     show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
     show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
+    show (Defun funcName args body) = "(defun " ++ funcName ++ " " ++ show args ++ " " ++ show body ++ ")"
 
 astKeyWordDefine :: [SExpr] -> Ast
 astKeyWordDefine ([]) = Error "missing definition to define statement" (-1)
 astKeyWordDefine (_:[]) = Error "missing symbol or value to define statement" (-1)
 astKeyWordDefine (x:y:[]) = case (x, y) of
-                        (StrExpr s _, StrExpr v _) -> Define s (Symbol v)
-                        (StrExpr s _, IntExpr v _) -> Define s (Number v)
+                        (SymbolExpr s _, StrExpr v _) -> Define s (Symbol v)
+                        (SymbolExpr s _, IntExpr v _) -> Define s (Number v)
                         (StrExpr s line, ExprList l) -> case (sexprToAST (ExprList l)) of
                             Error e _ -> Error ("invalid value for define statement -> " ++ e) line
                             ast -> Define s ast
@@ -44,18 +47,23 @@ astKeyWordHashtag s = Symbol s
 
 sexprToAST :: SExpr -> Ast
 sexprToAST (IntExpr i _) = Number i
-sexprToAST (StrExpr ('#':xs) _) = astKeyWordHashtag xs
-sexprToAST (StrExpr s _) = Symbol s
-sexprToAST (ExprList ((StrExpr "define" line):xs)) = case (output) of
+sexprToAST (SymbolExpr ('#':xs) _) = astKeyWordHashtag xs
+sexprToAST (SymbolExpr s _) = Symbol s
+sexprToAST (ExprList ((SymbolExpr "define" line):xs)) = case (output) of
                                                 Error e (-1) -> Error e line
                                                 Error _ _ -> output
                                                 _ -> output
                                                 where output = astKeyWordDefine xs
-sexprToAST (ExprList [StrExpr "if" _, condition, trueBranch, falseBranch]) =
-                                            Cond (sexprToAST condition) (sexprToAST trueBranch) (sexprToAST falseBranch)
+sexprToAST (ExprList [SymbolExpr "defun" line, SymbolExpr funcName _, ExprList args, body]) =
+                                                case output of
+                                                    Error e (-1) -> Error e line
+                                                    Error _ _ -> output
+                                                    _ -> output
+                                                where output = Defun funcName (map sexprToAST args) [sexprToAST body]
+sexprToAST (ExprList [SymbolExpr "if" _, condition, trueBranch, falseBranch]) = Cond (sexprToAST condition) (sexprToAST trueBranch) (sexprToAST falseBranch)
 sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
-                                        (StrExpr funcName _) -> Call funcName (map sexprToAST args)
-                                        _ -> Error "Invalid function application" (-1)
+    (SymbolExpr funcName _) -> Call funcName (map sexprToAST args)
+    _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
 
 sumAst :: Maybe Ast -> Maybe Ast -> Maybe Ast
