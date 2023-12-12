@@ -1,0 +1,18 @@
+? /home/arthur/.stack/programs/x86_64-linux/ghc-tinfo6-9.4.8/lib/ghc-9.4.8/lib/x86_64-linux-ghc-9.4.8/rts-1.0.2/include/ghcversion.h
+: hash: 4bc88722407a89d1efbfa9c116cd4017af6ea3ff746643032b96cef62782f5dd
+? /home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.8.1.0/build/glados/autogen/Paths_Glados.hs
+: hash: 8568de063cba8c471ed801a667f268ef0acc7ee1b4e1449a4e115a7795ee7185
+? /home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.8.1.0/build/glados/autogen/cabal_macros.h
+: hash: 94d176cfb84a1d8a97b501f3ca083d8b2c7a3c9bf3f015670ca34f0aa815c9d4
+/home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/CHANGELOG.md:
+  hash: 281f8feb9be9f5c1b4eff715513bd431e27337ee37f44627bfea9895ec36d6d4
+/home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/Glados.cabal:
+  hash: 624d550ef1a03010cfc6083fd7147ace539f762da3bc2c5893c723cc949d80ea
+/home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/app/Main.hs:
+  hash: dd4787dc4b793ec428188e6d839c47a2d9b2dc60b4488d7f20e52648e85b7c24
+/home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/Glados/package.yaml:
+  hash: b121854b0fad8dd0856be29faa55a456cad9acf379e170dcecd4336824360795
+/home/arthur/delivery/tek3/glados/B-FUN-500-PAR-5-2-glados-stanislas.commenge/README.md:
+  hash: 69c22a7235034061e9ec8eaa8150cfc85ae96867c06e5ba629cad7d4eba6949e
+/usr/include/stdc-predef.h:
+  hash: cb08cd5d4cc059a90833ac48a284d25016e8d56ded8ad4cd98d8ac59cc5053f3
