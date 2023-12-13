@@ -22,12 +22,15 @@ test: all
 OS := $(shell uname)
 
 install-stack:
-	ifeq ($(OS),Linux)
-	ifneq (,$(wildcard /usr/bin/stack))
-		@echo "Stack is already installed."
-	else
-		curl -sSL https://get.haskellstack.org/ | sh
-	endif
-	else
-		@echo "This Makefile is designed for Ubuntu/Linux and Stack installation."
-	endif
+    ifeq (,$(wildcard /usr/bin/stack))
+        curl -sSL https://get.haskellstack.org/ | sh
+    else
+        CURRENT_VERSION := $(shell stack --numeric-version)
+        REQUIRED_VERSION := 2.13.1
+
+        ifneq ($(CURRENT_VERSION),$(REQUIRED_VERSION))
+            stack upgrade
+        else
+            @echo "Stack is already installed."
+        endif
+    endif
