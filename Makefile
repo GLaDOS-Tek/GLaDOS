@@ -5,7 +5,7 @@
 
 .PHONY: all clean fclean re test
 
-all:
+all: install-stack
 	cd Glados && stack install
 
 clean:
