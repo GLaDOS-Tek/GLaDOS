@@ -9,4 +9,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run "make test" for haskell
-        run: ls -la
+        run: make test
+      working-directory: ${{ github.workspace }}
