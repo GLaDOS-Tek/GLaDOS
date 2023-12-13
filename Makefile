@@ -21,4 +21,5 @@ test: all
 
 install-stack:
 	curl -sSL https://get.haskellstack.org/ | sh
+	cd Glados && stack setup
 
