@@ -8,6 +8,9 @@ jobs:
   test_on_push:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Run "make test" for haskell
         working-directory: ${{ github.workspace }}
         run: make test
