@@ -1,0 +1,12 @@
+on:
+  push:
+    branches:
+      - main
+      - 0-dev
+
+jobs:
+  test_on_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run "make test" for haskell
+        run: make test
