@@ -5,7 +5,7 @@
 
 .PHONY: all clean fclean re test
 
-all: install-stack
+all:
 	cd Glados && stack install
 
 clean:
@@ -18,8 +18,3 @@ re: fclean all
 
 test: all
 	cd Glados && stack test
-
-install-stack:
-	curl -sSL https://get.haskellstack.org/ | sh
-	cd Glados && stack setup
-
