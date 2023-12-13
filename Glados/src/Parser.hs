@@ -1,3 +1,5 @@
+module Parser (generalParser) where
+
 -- IMPORTS
 
 import Text.Read
