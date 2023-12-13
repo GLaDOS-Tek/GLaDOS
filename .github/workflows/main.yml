@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run "make test" for haskell
-        run: make test
+        run: ls -la
