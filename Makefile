@@ -18,19 +18,3 @@ re: fclean all
 
 test: all
 	cd Glados && stack test
-
-OS := $(shell uname)
-
-install-stack:
-    ifeq (,$(wildcard /usr/bin/stack))
-        curl -sSL https://get.haskellstack.org/ | sh
-    else
-        CURRENT_VERSION := $(shell stack --numeric-version)
-        REQUIRED_VERSION := 2.13.1
-
-        ifneq ($(CURRENT_VERSION),$(REQUIRED_VERSION))
-            stack upgrade
-        else
-            @echo "Stack is already installed."
-        endif
-    endif
