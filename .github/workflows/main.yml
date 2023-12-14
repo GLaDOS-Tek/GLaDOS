@@ -8,16 +8,12 @@ jobs:
   test_on_push:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Haskell
-        uses: https://github.com/haskell-actions/setup.git
+      - uses: actions/checkout@v3
+      - uses: haskell-actions/setup@v2
         with:
-          ghc-version: '8.10.4'
-          cabal-version: '3.4.0.0'
-
-      - name: Install project dependencies
-        run: |
-          stack setup
-          stack install
+          ghc-version: '8.8.4'
+          enable-stack: true
+          stack-version: 'latest'
   
       - name: Checkout repository
         uses: actions/checkout@v2
