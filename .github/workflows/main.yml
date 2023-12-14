@@ -8,14 +8,17 @@ jobs:
   test_on_push:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Stack
-        run: curl -sSL https://get.haskellstack.org/ | sh
-          stack --version
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v1
+        with:
+          ghc-version: '8.10.4'
+          cabal-version: '3.4.0.0'
 
       - name: Install project dependencies
-        run: stack setup
+        run: |
+          stack setup
           stack install
-
+  
       - name: Checkout repository
         uses: actions/checkout@v2
 
