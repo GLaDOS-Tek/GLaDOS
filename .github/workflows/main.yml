@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Haskell
-        uses: haskell-actions/setup@v1
+        uses: https://github.com/haskell-actions/setup.git
         with:
           ghc-version: '8.10.4'
           cabal-version: '3.4.0.0'
