@@ -14,13 +14,15 @@ jobs:
           ghc-version: '8.8.4'
           enable-stack: true
           stack-version: 'latest'
+
       - name: Install project dependencies
-        run: stack setup
+        run: |
+          stack setup
           stack install
 
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Run "make test" for haskell
+      - name: Run "make test" for Haskell
         working-directory: ${{ github.workspace }}
         run: make test
