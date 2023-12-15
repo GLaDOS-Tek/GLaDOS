@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,7 +25,10 @@ source-repository head
 
 library
   exposed-modules:
+      Error
       Eval
+      Parser
+      Tools
   other-modules:
       Paths_Glados
   autogen-modules:
@@ -55,6 +58,7 @@ test-suite Glados-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ParserTests
       Paths_Glados
   autogen-modules:
       Paths_Glados
@@ -64,4 +68,5 @@ test-suite Glados-test
   build-depends:
       Glados
     , base >=4.7 && <5
+    , hspec
   default-language: Haskell2010

@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      - main
+      - 0-dev
+
+jobs:
+  test_on_push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '8.8.4'
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Install project dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+          stack init
+          stack setup
+          stack install
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run "make test" for Haskell
+        working-directory: ${{ github.workspace }}
+        run: make test
