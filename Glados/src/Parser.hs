@@ -1,4 +1,4 @@
-module Parser (generalParser) where
+module Parser (generalParser, SExpr(..), exprParser, parseChar, parseMany, parseMany, parseSome, parseInt, parseList, parseString) where
 
 -- IMPORTS
 
@@ -13,7 +13,7 @@ data SExpr = IntExpr Int Int -- second int is the line
     | StrExpr String Int
     | SymbolExpr String Int
     | ExprList [SExpr]
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 -- GLOBAL VAR
 
@@ -81,6 +81,8 @@ parseUInt :: Parser Int -- parse an unsigned Int
 parseUInt s = case (parseSome(parseAnyChar ['0'..'9']) s) of
     Just (x, (' ':xs)) -> readUInt x (' ':xs)
     Just (x, (')':xs)) -> readUInt x (')':xs)
+    Just (x, ('\n':xs)) -> readUInt x ('\n':xs)
+    Just (x, ('\t':xs)) -> readUInt x ('\t':xs)
     Just (x, "") -> readUInt x ""
     _ -> Nothing
     where
@@ -99,8 +101,10 @@ getBiggerLine line (StrExpr _ newLine) = newLine
 getBiggerLine line (ExprList _) = line
 
 parseListElement :: Int -> Parser [SExpr]
-parseListElement line (' ':xs) = parseListElement line xs --prevent to give " )" to general parser
 parseListElement line (')':xs) = Just ([], xs)
+parseListElement line ('\n':xs) = parseListElement (line + 1) xs
+parseListElement line ('\t':xs) = parseListElement line xs
+parseListElement line (' ':xs) = parseListElement line xs
 parseListElement line str = case generalParser line str of
     Just (a, (')':as)) -> Just ([a], as)
     Just (a, as) -> case parseListElement (getBiggerLine line a) as of
@@ -122,15 +126,18 @@ parseString l s = case parseSome (parseAnyChar valid_char) s of
     Just (a, as) -> Just (SymbolExpr a l, as)
     _ -> Nothing
 
-generalParser :: Int -> Parser SExpr
-generalParser _ (')':xs) = Nothing
-generalParser line ('\n':xs) = generalParser (line + 1) xs
-generalParser line ('\t':xs) = generalParser line xs
-generalParser line (' ':xs) = generalParser line xs
-generalParser line str = case parseInt str of
+exprParser :: Int -> Parser SExpr
+exprParser line str = case parseInt str of
     Just (i, is) -> Just ((IntExpr i line), is)
     Nothing -> case parseString line str of
         Just (s, ss) -> Just (s, ss)
         Nothing -> case (parseList line str) of
             Just (list, ls) -> Just (ExprList list, ls)
             Nothing -> Nothing
+
+generalParser :: Int -> Parser SExpr
+generalParser _ (')':xs) = Nothing
+generalParser line ('\n':xs) = generalParser (line + 1) xs
+generalParser line ('\t':xs) = generalParser line xs
+generalParser line (' ':xs) = generalParser line xs
+generalParser line str = exprParser line str
