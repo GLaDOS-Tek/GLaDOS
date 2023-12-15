@@ -11,6 +11,7 @@ data Ast = Define String Ast
     | Defun String [Ast] [Ast]
     | Number Int
     | Symbol String
+    | Str String
     | Boolean Bool
     | Call String [Ast]
     | AstList [Ast]
@@ -21,6 +22,7 @@ instance Show Ast where
     show (Define str ast) = "Define " ++ str ++ " = " ++ show ast
     show (Number i) = show i
     show (Symbol s) = s
+    show (Str s) = s
     show (Boolean b) = show b
     show (Call str asts) = "Call " ++ str ++ " (" ++ show asts ++ ")"
     show (AstList asts) = "AstList " ++ show asts
@@ -70,24 +72,42 @@ primitives :: [(String, Ast -> Ast)]
 primitives = [("+", numericOp (+)),
               ("-", numericOp (-)),
               ("*", numericOp (*)),
-              ("/", numericOp div)]
+              ("/", numericOp div),
+              ("=", binaryOp unwrapNumber (==)),
+              ("/=", binaryOp unwrapNumber (/=)),
+              ("<", binaryOp unwrapNumber (<)),
+              (">", binaryOp unwrapNumber (>)),
+              (">=", binaryOp unwrapNumber (>=)),
+              ("<=", binaryOp unwrapNumber (<=))]
 
 apply :: String -> Ast -> Ast
 apply op params = case lookup op primitives of
                     Just func -> func params
                     Nothing -> Error ("Function '" ++ op ++ "' is not a primitive.") 0
 
-extractNumber :: Ast -> Int
-extractNumber (Number n) = n
-extractNumber _ = 0
+unwrapStr :: Ast -> String
+unwrapStr (Str s) = s
+unwrapStr _ = ""
+
+unwrapNumber :: Ast -> Int
+unwrapNumber (Number n) = n
+unwrapNumber _ = 0
+
+unwrapBool :: Ast -> Bool
+unwrapBool (Boolean b) = b
+unwrapBool _ = False
 
 numericOp :: (Int -> Int -> Int) -> Ast -> Ast
-numericOp op (AstList list) = Number (foldl1 op (map extractNumber list))
-numericOp _ _ = Error "" 0
+numericOp op (AstList list) = Number (foldl1 op (map unwrapNumber list))
+numericOp _ _ = Error "Numerical operation" 0
+
+binaryOp :: (Ast -> a) -> (a -> a -> Bool) -> Ast -> Ast
+binaryOp uw op (AstList [lhs, rhs]) = Boolean $ op (uw lhs) (uw rhs)
+binaryOp _ _ _ = Error "Binary operation" 0
 
 evalAst :: Ast -> Ast
 evalAst (Number num) = Number num
-evalAst (Symbol sym) = Symbol sym
+evalAst (Str str) = Str str
 evalAst (Boolean bool) = Boolean bool
-evalAst (Call op args) = apply op (AstList (map evalAst args))
+evalAst (Call func args) = apply func $ AstList (map evalAst args)
 evalAst _ = Error "" 0
