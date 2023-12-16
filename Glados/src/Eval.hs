@@ -110,4 +110,5 @@ evalAst (Number num) = Number num
 evalAst (Str str) = Str str
 evalAst (Boolean bool) = Boolean bool
 evalAst (Call func args) = apply func $ AstList (map evalAst args)
-evalAst _ = Error "" 0
+evalAst (AstList list) = AstList (map evalAst list)
+evalAst _ = Error "Evaluation" 0
