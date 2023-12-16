@@ -4,16 +4,11 @@ module Parser (generalParser, SExpr(..), exprParser, parseChar, parseMany, parse
 
 import Text.Read
 import Debug.Trace
+import Structs (SExpr(..))
 
--- CUSTOM TYPES
+-- CUSTOM TYPE
 
 type Parser a = String -> Maybe (a, String)
-
-data SExpr = IntExpr Int Int -- second int is the line
-    | StrExpr String Int
-    | SymbolExpr String Int
-    | ExprList [SExpr]
-    deriving (Show, Read, Eq)
 
 -- GLOBAL VAR
 
