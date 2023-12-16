@@ -1,4 +1,4 @@
-module Eval (SExpr(..), Ast(..), sexprToAST) where
+module Eval (SExpr(..), Ast(..), sexprToAST, evalAst) where
 
 -- IMPORTS
 
@@ -39,8 +39,8 @@ sexprToAST (ExprList [SymbolExpr "defun" line, SymbolExpr funcName _, ExprList a
                                                     _ -> output
                                                 where output = Defun funcName (map sexprToAST args) [sexprToAST body]
 sexprToAST (ExprList [SymbolExpr "if" _, condition, trueBranch, falseBranch]) = Cond (sexprToAST condition) (sexprToAST trueBranch) (sexprToAST falseBranch)
-sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
-    (SymbolExpr funcName _) -> Call funcName (map sexprToAST args)
+sexprToAST (ExprList ((SymbolExpr funcName _) : args)) = case args of
+    args -> Call funcName (map sexprToAST args)
     _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
 
@@ -61,11 +61,12 @@ extractNumber _ = 0
 
 numericOp :: (Int -> Int -> Int) -> Ast -> Ast
 numericOp op (AstList list) = Number (foldl1 op (map extractNumber list))
-numericOp _ _ = Error "" 0
+numericOp _ _ = Error "num" 0
 
 evalAst :: Ast -> Ast
 evalAst (Number num) = Number num
 evalAst (Symbol sym) = Symbol sym
 evalAst (Boolean bool) = Boolean bool
 evalAst (Call op args) = apply op (AstList (map evalAst args))
-evalAst _ = Error "" 0
+evalAst (AstList list) = AstList (map evalAst list)
+evalAst _ = Error "eval" 0

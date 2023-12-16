@@ -4,7 +4,7 @@ module Main (main) where
 
 import Structs (SExpr(..))
 import Parser (generalParser)
-import Eval (sexprToAST)
+import Eval (sexprToAST, evalAst)
 import Tools (extractFromFile)
 import Error (sendError, errorParams)
 import System.Environment (getArgs)
@@ -18,7 +18,6 @@ main = getArgs >>= \args ->
             extractFromFile filepath >>= \content ->
                 case generalParser 1 content of
                     Just (expr, _) ->
-                        let ast = sexprToAST $ ExprList expr
-                        in putStrLn $ show ast
+                        putStrLn $ show $ evalAst $ sexprToAST $ ExprList expr
                     _ -> sendError 84 "Error: Failed parsing"
         _ -> errorParams
