@@ -28,6 +28,7 @@ library
       Error
       Eval
       Parser
+      Structs
       Tools
   other-modules:
       Paths_Glados

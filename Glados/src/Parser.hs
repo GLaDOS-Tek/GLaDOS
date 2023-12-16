@@ -3,16 +3,12 @@ module Parser (generalParser, SExpr(..), exprParser, parseChar, parseMany, parse
 -- IMPORTS
 
 import Text.Read
+import Debug.Trace
+import Structs (SExpr(..))
 
--- CUSTOM TYPES
+-- CUSTOM TYPE
 
 type Parser a = String -> Maybe (a, String)
-
-data SExpr = IntExpr Int Int -- second int is the line
-    | StrExpr String Int
-    | SymbolExpr String Int
-    | ExprList [SExpr]
-    deriving (Show, Read, Eq)
 
 -- GLOBAL VAR
 
@@ -80,22 +76,10 @@ getBiggerLine :: Int -> SExpr -> Int
 getBiggerLine _ (SymbolExpr _ newLine) = newLine
 getBiggerLine _ (IntExpr _ newLine) = newLine
 getBiggerLine _ (StrExpr _ newLine) = newLine
-getBiggerLine line (ExprList _) = line
-
-parseListElement :: Int -> Parser [SExpr]
-parseListElement _ (')':xs) = Just ([], xs)
-parseListElement line ('\n':xs) = parseListElement (line + 1) xs
-parseListElement line ('\t':xs) = parseListElement line xs
-parseListElement line (' ':xs) = parseListElement line xs
-parseListElement line str = case generalParser line str of
-    Just (a, (')':as)) -> Just ([a], as)
-    Just (a, as) -> case parseListElement (getBiggerLine line a) as of
-        Just (b, bs) -> Just ([a] ++ b, bs)
-        Nothing -> Nothing
-    _ -> Nothing
+getBiggerLine line (ExprList list) = getBiggerLine line (last list)
 
 parseList :: Int -> Parser [SExpr]
-parseList line ('(':xs) = parseListElement line xs
+parseList line ('(':xs) = generalParser line xs
 parseList _ _ = Nothing
 
 parseString :: Int -> Parser SExpr
@@ -115,11 +99,16 @@ exprParser line str = case parseInt str of
         Just (s, ss) -> Just (s, ss)
         Nothing -> case (parseList line str) of
             Just (list, ls) -> Just (ExprList list, ls)
-            Nothing -> Nothing
+            Nothing -> trace ("exprParser failed :\n-->" ++ str ++ "<--") Nothing
 
-generalParser :: Int -> Parser SExpr
-generalParser _ (')':_) = Nothing
+generalParser :: Int -> Parser [SExpr]
+generalParser _ "" = Just ([], "")
+generalParser _ (')':xs) = Just ([], xs)
 generalParser line ('\n':xs) = generalParser (line + 1) xs
 generalParser line ('\t':xs) = generalParser line xs
 generalParser line (' ':xs) = generalParser line xs
-generalParser line str = exprParser line str
+generalParser line str = case exprParser line str of
+    Just (a, as) -> case generalParser (getBiggerLine line a) as of
+        Just (b, bs) -> Just ([a] ++ b, bs)
+        Nothing -> Nothing
+    _ -> Nothing

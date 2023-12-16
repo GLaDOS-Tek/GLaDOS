@@ -1,34 +1,10 @@
-module Eval (SExpr(..), Ast(..), sexprToAST) where
+module Eval (SExpr(..), Ast(..), sexprToAST, evalAst) where
 
-data SExpr = IntExpr Int Int -- second int is the line
-    | StrExpr String Int
-    | SymbolExpr String Int
-    | ExprList [SExpr]
-    deriving (Show, Read)
+-- IMPORTS
 
-data Ast = Define String Ast
-    | Cond Ast Ast Ast
-    | Defun String [Ast] [Ast]
-    | Number Int
-    | Symbol String
-    | Str String
-    | Boolean Bool
-    | Call String [Ast]
-    | AstList [Ast]
-    | Error String Int
-    deriving (Read)
+import Structs (SExpr(..), Ast(..))
 
-instance Show Ast where
-    show (Define str ast) = "Define " ++ str ++ " = " ++ show ast
-    show (Number i) = show i
-    show (Symbol s) = s
-    show (Str s) = s
-    show (Boolean b) = show b
-    show (Call str asts) = "Call " ++ str ++ " (" ++ show asts ++ ")"
-    show (AstList asts) = "AstList " ++ show asts
-    show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
-    show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
-    show (Defun funcName args body) = "(defun " ++ funcName ++ " " ++ show args ++ " " ++ show body ++ ")"
+-- FUNCTIONS
 
 astKeyWordDefine :: [SExpr] -> Ast
 astKeyWordDefine ([]) = Error "missing definition to define statement" (-1)
@@ -63,8 +39,8 @@ sexprToAST (ExprList [SymbolExpr "defun" line, SymbolExpr funcName _, ExprList a
                                                     _ -> output
                                                 where output = Defun funcName (map sexprToAST args) [sexprToAST body]
 sexprToAST (ExprList [SymbolExpr "if" _, condition, trueBranch, falseBranch]) = Cond (sexprToAST condition) (sexprToAST trueBranch) (sexprToAST falseBranch)
-sexprToAST (ExprList (funcExpr : args)) = case funcExpr of
-    (SymbolExpr funcName _) -> Call funcName (map sexprToAST args)
+sexprToAST (ExprList ((SymbolExpr funcName _) : args)) = case args of
+    args -> Call funcName (map sexprToAST args)
     _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
 
