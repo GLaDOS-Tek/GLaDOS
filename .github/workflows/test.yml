@@ -1,0 +1,31 @@
+jobs:
+  test_on_push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ghc-version: ['8.8.4']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-${{ matrix.ghc-version }}-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-${{ matrix.ghc-version }}-
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc-version }}
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Install project dependencies
+        run: stack build --test --no-run-tests --dependencies-only
+
+      - name: Run tests
+        run: stack test --fast --no-run-tests
