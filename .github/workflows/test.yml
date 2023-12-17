@@ -2,7 +2,7 @@ name: Dependency Update
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs daily at midnight (adjust as needed)
+    - cron: '0 0 * * *'
 
 jobs:
   check-dependencies:
