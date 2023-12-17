@@ -27,6 +27,7 @@ sexprToAST :: SExpr -> Ast
 sexprToAST (IntExpr i _) = Number i
 sexprToAST (SymbolExpr ('#':xs) _) = astKeyWordHashtag xs
 sexprToAST (SymbolExpr s _) = Symbol s
+sexprToAST (StrExpr s _) = Str s
 sexprToAST (ExprList ((SymbolExpr "define" line):xs)) = case (output) of
                                                 Error e (-1) -> Error e line
                                                 Error _ _ -> output

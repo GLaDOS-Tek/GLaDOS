@@ -10,6 +10,7 @@ data Ast = Define String Ast
     | Cond Ast Ast Ast
     | Defun String [Ast] [Ast]
     | Number Int
+    | Str String
     | Symbol String
     | Boolean Bool
     | Call String [Ast]
