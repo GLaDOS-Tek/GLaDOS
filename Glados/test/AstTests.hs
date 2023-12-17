@@ -27,3 +27,7 @@ astTests = hspec $ do
 
     it "should convert a if expression" $ do
       sexprToAST (SymbolExpr "if" 1) `shouldBe` Symbol "if"
+
+    it "handle error case of define symbol" $ do
+      let invalidDefineExpr = ExprList [SymbolExpr "define" 1, IntExpr 42 2]
+      sexprToAST invalidDefineExpr `shouldBe` Error "missing symbol or value to define statement" 1
