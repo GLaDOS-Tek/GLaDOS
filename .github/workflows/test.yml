@@ -1,9 +1,12 @@
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight (adjust as needed)
+
 jobs:
-  test_on_push:
+  check-dependencies:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ghc-version: ['8.8.4']
 
     steps:
       - name: Checkout repository
@@ -13,19 +16,21 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-stack-${{ matrix.ghc-version }}-${{ hashFiles('stack.yaml') }}
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-stack-${{ matrix.ghc-version }}-
+            ${{ runner.os }}-stack-
 
       - name: Setup Haskell
         uses: haskell-actions/setup@v2
-        with:
-          ghc-version: ${{ matrix.ghc-version }}
-          enable-stack: true
-          stack-version: 'latest'
 
-      - name: Install project dependencies
-        run: stack build --test --no-run-tests --dependencies-only
-
-      - name: Run tests
-        run: stack test --fast --no-run-tests
+      - name: Check for dependency updates
+        run: |
+          stack update
+          stack outdated > dependency_changes.txt
+          if [ -s dependency_changes.txt ]; then
+            echo "There are updates available. Please review: "
+            cat dependency_changes.txt
+            # You can add further actions here, such as sending notifications
+          else
+            echo "No dependency updates available."
+          fi
