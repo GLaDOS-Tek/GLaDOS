@@ -21,6 +21,7 @@ data Ast = Define String Ast
 instance Show Ast where
     show (Define str ast) = "Define " ++ str ++ " = " ++ show ast
     show (Number i) = show i
+    show (Str s) = s
     show (Symbol s) = s
     show (Boolean b) = show b
     show (Call str asts) = "Call " ++ str ++ " (" ++ show asts ++ ")"

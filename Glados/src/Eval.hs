@@ -44,6 +44,24 @@ sexprToAST (ExprList ((SymbolExpr funcName _) : args)) = case args of
     _ -> Error "Invalid function application" (-1)
 sexprToAST (ExprList l) = AstList (map sexprToAST l)
 
+type Env = [(String, Ast)]
+
+emptyEnv :: Env
+emptyEnv = []
+
+envIsBound :: Env -> String -> Bool
+envIsBound env key = case envGet env key of
+                        Just val -> True
+                        Nothing -> False
+
+envGet :: Env -> String -> Maybe Ast
+envGet env key = lookup key env
+
+envBind :: Env -> String -> Ast -> Env
+envBind env key val = case envIsBound env key of
+                        True -> env
+                        False -> (key, val) : env
+
 primitives :: [(String, Ast -> Ast)]
 primitives = [("+", numericOp (+)),
               ("-", numericOp (-)),
@@ -81,10 +99,16 @@ binaryOp :: (Ast -> a) -> (a -> a -> Bool) -> Ast -> Ast
 binaryOp uw op (AstList [lhs, rhs]) = Boolean $ op (uw lhs) (uw rhs)
 binaryOp _ _ _ = Error "Binary operation" 0
 
-evalAst :: Ast -> Ast
-evalAst (Number num) = Number num
-evalAst (Str str) = Str str
-evalAst (Boolean bool) = Boolean bool
-evalAst (Call func args) = apply func $ AstList (map evalAst args)
-evalAst (AstList list) = AstList (map evalAst list)
-evalAst _ = Error "Evaluation" 0
+evalAst :: Env -> Ast -> Ast
+evalAst _ (Number num) = Number num
+evalAst _ (Str str) = Str str
+evalAst _ (Boolean bool) = Boolean bool
+evalAst env (Symbol sym) = case envGet env sym of
+                            Just val -> val
+                            Nothing -> Error "Variable is not bound" 0
+evalAst env (Define sym expr) = if envIsBound env sym
+                                then Error "Variable is already bound" 0
+                                else snd $ head $ envBind env sym expr
+evalAst env (Call func args) = apply func $ AstList (map (evalAst env) args)
+evalAst env (AstList list) = AstList (map (evalAst env) list)
+evalAst _ _ = Error "Evaluation" 0

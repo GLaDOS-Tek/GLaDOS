@@ -18,6 +18,6 @@ main = getArgs >>= \args ->
             extractFromFile filepath >>= \content ->
                 case generalParser 1 content of
                     Just (expr, _) ->
-                        putStrLn $ show $ evalAst $ sexprToAST $ ExprList expr
+                        putStrLn $ show $ evalAst [] $ sexprToAST $ ExprList expr
                     _ -> sendError 84 "Error: Failed parsing"
         _ -> errorParams
