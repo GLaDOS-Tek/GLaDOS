@@ -81,10 +81,19 @@ binaryOp :: (Ast -> a) -> (a -> a -> Bool) -> Ast -> Ast
 binaryOp uw op (AstList [lhs, rhs]) = Boolean $ op (uw lhs) (uw rhs)
 binaryOp _ _ _ = Error "Binary operation" 0
 
+evalIf :: Ast -> Ast -> Ast -> Ast
+evalIf condExpr trueBranch falseBranch =
+    case evalAst condExpr of
+        Boolean True -> evalAst trueBranch
+        Boolean False -> evalAst falseBranch
+        Number _ -> evalAst trueBranch
+        _ -> Error "Condition in 'if' statement must evaluate to a boolean value" 0
+
 evalAst :: Ast -> Ast
 evalAst (Number num) = Number num
 evalAst (Str str) = Str str
 evalAst (Boolean bool) = Boolean bool
 evalAst (Call func args) = apply func $ AstList (map evalAst args)
+evalAst (Cond cond left right) = evalIf cond left right
 evalAst (AstList list) = AstList (map evalAst list)
 evalAst _ = Error "Evaluation" 0
