@@ -1,4 +1,7 @@
 import ParserTests (parserTests)
+import AstTests (astTests)
 
 main :: IO ()
-main = parserTests
+main = do
+    parserTests
+    astTests

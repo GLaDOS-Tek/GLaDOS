@@ -60,6 +60,7 @@ test-suite Glados-test
   main-is: Spec.hs
   other-modules:
       ParserTests
+      AstTests
       Paths_Glados
   autogen-modules:
       Paths_Glados

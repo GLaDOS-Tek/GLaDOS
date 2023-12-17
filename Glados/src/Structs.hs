@@ -15,7 +15,7 @@ data Ast = Define String Ast
     | Call String [Ast]
     | AstList [Ast]
     | Error String Int
-    deriving (Read)
+    deriving (Read, Eq)
 
 instance Show Ast where
     show (Define str ast) = "Define " ++ str ++ " = " ++ show ast
