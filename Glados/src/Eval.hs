@@ -99,6 +99,14 @@ binaryOp :: (Ast -> a) -> (a -> a -> Bool) -> Ast -> Ast
 binaryOp uw op (AstList [lhs, rhs]) = Boolean $ op (uw lhs) (uw rhs)
 binaryOp _ _ _ = Error "Binary operation" 0
 
+evalIf :: Env -> Ast -> Ast -> Ast -> Ast
+evalIf env condExpr trueBranch falseBranch =
+    case evalAst env condExpr of
+        Boolean True -> evalAst env trueBranch
+        Boolean False -> evalAst env falseBranch
+        Number _ -> evalAst env trueBranch
+        _ -> Error "Condition in 'if' statement must evaluate to a boolean value" 0
+
 evalAst :: Env -> Ast -> Ast
 evalAst _ (Number num) = Number num
 evalAst _ (Str str) = Str str
@@ -109,6 +117,7 @@ evalAst env (Symbol sym) = case envGet env sym of
 evalAst env (Define sym expr) = if envIsBound env sym
                                 then Error "Variable is already bound" 0
                                 else snd $ head $ envBind env sym expr
+evalAst env (Cond cond left right) = evalIf env cond left right
 evalAst env (Call func args) = apply func $ AstList (map (evalAst env) args)
 evalAst env (AstList list) = AstList (map (evalAst env) list)
 evalAst _ _ = Error "Evaluation" 0
