@@ -31,6 +31,7 @@ resolver:
 #   - wai
 packages:
 - .
+
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
@@ -69,3 +70,11 @@ packages:
 local-bin-path: ../
 
 system-ghc: true
+
+# Enable code coverage with HPC
+test:
+  coverage:
+    enabled: true
+    hpc:
+      markup: true
+      expect-failure: true
