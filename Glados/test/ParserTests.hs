@@ -1,12 +1,25 @@
 module ParserTests (parserTests) where
 
+-- IMPORTS
+
 import Test.Hspec
 import Parser (generalParser, exprParser, parseString, parseList, parseInt, parseSome, parseMany, parseAnyChar, parseChar)
 import Structs (SExpr(..))
 
+-- CALL ALL TESTS
+
 parserTests :: IO ()
 parserTests =
-  testParseAnyChar >> testParseMany >> testParseSome >> testParseInt >> testParseList >> testParseString >> testExprParser >> testGeneralParser
+  testParseAnyChar >>
+  testParseMany >>
+  testParseSome >>
+  testParseInt >>
+  testParseList >>
+  testParseString >>
+  testExprParser >>
+  testGeneralParser
+
+-- TESTS
 
 testParseChar :: IO ()
 testParseChar = hspec $ do
