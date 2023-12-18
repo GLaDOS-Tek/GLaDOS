@@ -1,2 +1,11 @@
 (define x 42)
-x
+(define y 21)
+(define question (if #t (* x y) (/ x y)))
+(question)
+(question)
+(question)
+(question)
+(question)
+(question)
+(+ 10 20 30 40 50)
+(+ (/ x y) (* x y))
