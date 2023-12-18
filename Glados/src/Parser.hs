@@ -3,7 +3,6 @@ module Parser (generalParser, SExpr(..), exprParser, parseChar, parseAnyChar, pa
 -- IMPORTS
 
 import Text.Read
-import Debug.Trace
 import Structs (SExpr(..))
 
 -- CUSTOM TYPE
