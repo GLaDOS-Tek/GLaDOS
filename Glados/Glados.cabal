@@ -59,8 +59,8 @@ test-suite Glados-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      ParserTests
       AstTests
+      ParserTests
       Paths_Glados
   autogen-modules:
       Paths_Glados

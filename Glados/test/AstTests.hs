@@ -21,7 +21,7 @@ astTests = hspec $ do
 
     it "should convert a define expression" $ do
       sexprToAST (SymbolExpr "define" 1) `shouldBe` Symbol "define"
-    
+
     it "should convert a defun expression" $ do
       sexprToAST (SymbolExpr "defun" 1) `shouldBe` Symbol "defun"
 
