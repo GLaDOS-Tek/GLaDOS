@@ -17,4 +17,4 @@ fclean: clean
 re: fclean all
 
 test: all
-	cd Glados && stack test
+	cd Glados && stack test --coverage

@@ -1,4 +1,4 @@
-module Parser (generalParser, SExpr(..), exprParser, parseChar, parseMany, parseSome, parseInt, parseList, parseString) where
+module Parser (generalParser, SExpr(..), exprParser, parseChar, parseAnyChar, parseMany, parseSome, parseInt, parseList, parseString) where
 
 -- IMPORTS
 
@@ -79,7 +79,9 @@ getBiggerLine _ (StrExpr _ newLine) = newLine
 getBiggerLine line (ExprList list) = getBiggerLine line (last list)
 
 parseList :: Int -> Parser [SExpr]
-parseList line ('(':xs) = generalParser line xs
+parseList line ('(':xs) = case generalParser line xs of
+    Just (a, ')':as) -> Just (a, as)
+    _ -> Nothing
 parseList _ _ = Nothing
 
 parseString :: Int -> Parser SExpr
@@ -99,11 +101,11 @@ exprParser line str = case parseInt str of
         Just (s, ss) -> Just (s, ss)
         Nothing -> case (parseList line str) of
             Just (list, ls) -> Just (ExprList list, ls)
-            Nothing -> trace ("exprParser failed :\n-->" ++ str ++ "<--") Nothing
+            Nothing -> Nothing
 
 generalParser :: Int -> Parser [SExpr]
 generalParser _ "" = Just ([], "")
-generalParser _ (')':xs) = Just ([], xs)
+generalParser _ (')':xs) = Just ([], ')':xs)
 generalParser line ('\n':xs) = generalParser (line + 1) xs
 generalParser line ('\t':xs) = generalParser line xs
 generalParser line (' ':xs) = generalParser line xs
