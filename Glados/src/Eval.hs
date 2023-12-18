@@ -19,8 +19,8 @@ astKeyWordDefine (x:y:[]) = case (x, y) of
 astKeyWordDefine _ = Error "too many arguments to define statement" (-1)
 
 astKeyWordHashtag :: String -> Ast
-astKeyWordHashtag ("t") = Boolean True
-astKeyWordHashtag ("f") = Boolean False
+astKeyWordHashtag "t" = Boolean True
+astKeyWordHashtag "f" = Boolean False
 astKeyWordHashtag s = Symbol s
 
 sexprToAST :: SExpr -> Ast
@@ -74,11 +74,6 @@ primitives = [("+", numericOp (+)),
               (">=", binaryOp unwrapNumber (>=)),
               ("<=", binaryOp unwrapNumber (<=))]
 
-apply :: String -> Ast -> Ast
-apply op params = case lookup op primitives of
-                    Just func -> func params
-                    Nothing -> Error ("Function '" ++ op ++ "' is not a primitive.") 0
-
 unwrapStr :: Ast -> String
 unwrapStr (Str s) = s
 unwrapStr _ = ""
@@ -99,25 +94,34 @@ binaryOp :: (Ast -> a) -> (a -> a -> Bool) -> Ast -> Ast
 binaryOp uw op (AstList [lhs, rhs]) = Boolean $ op (uw lhs) (uw rhs)
 binaryOp _ _ _ = Error "Binary operation" 0
 
-evalIf :: Env -> Ast -> Ast -> Ast -> Ast
+evalIf :: Env -> Ast -> Ast -> Ast -> (Env, [Ast])
 evalIf env condExpr trueBranch falseBranch =
     case evalAst env condExpr of
-        Boolean True -> evalAst env trueBranch
-        Boolean False -> evalAst env falseBranch
-        Number _ -> evalAst env trueBranch
-        _ -> Error "Condition in 'if' statement must evaluate to a boolean value" 0
+        (env', Boolean True : [_]) -> evalAst env' trueBranch
+        (env', Boolean False : [_]) -> evalAst env' falseBranch
+        (env', Number _ : [_]) -> evalAst env' trueBranch
+        _ -> ([], [Error "Condition in 'if' statement must evaluate to a boolean value" 0])
 
-evalAst :: Env -> Ast -> Ast
-evalAst _ (Number num) = Number num
-evalAst _ (Str str) = Str str
-evalAst _ (Boolean bool) = Boolean bool
+apply :: Env -> String -> Ast -> Ast
+apply env op params = case lookup op primitives of
+                    Just func -> func params
+                    Nothing -> Error ("Function '" ++ op ++ "' is not a primitive.") 0
+
+evalAst :: Env -> Ast -> (Env, [Ast])
+evalAst env (Number num) = (env, [Number num])
+evalAst env (Str str) = (env, [Str str])
+evalAst env (Boolean bool) = (env, [Boolean bool])
 evalAst env (Symbol sym) = case envGet env sym of
-                            Just val -> val
-                            Nothing -> Error "Variable is not bound" 0
+                            Just val -> evalAst env val
+                            Nothing -> (env, [Error "Variable is not bound" 0])
 evalAst env (Define sym expr) = if envIsBound env sym
-                                then Error "Variable is already bound" 0
-                                else snd $ head $ envBind env sym expr
+                                then (env, [Error "Variable is already bound" 0])
+                                else (envBind env sym expr, [expr])
 evalAst env (Cond cond left right) = evalIf env cond left right
-evalAst env (Call func args) = apply func $ AstList (map (evalAst env) args)
-evalAst env (AstList list) = AstList (map (evalAst env) list)
-evalAst _ _ = Error "Evaluation" 0
+-- evalAst env (Call func args) = case evalAst env (AstList args) of
+--                                 (env', args') -> (env', [])
+evalAst env (AstList list) =  foldl combinator ([], []) list
+        where combinator :: (Env, [Ast]) -> Ast -> (Env, [Ast])
+              combinator (env, ast) elem = case evalAst env elem of
+                        (env', elem') -> (env', elem' ++ ast)
+evalAst _ _ = ([], [Error "Evaluation" 0])

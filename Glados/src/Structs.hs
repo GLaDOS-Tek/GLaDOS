@@ -28,4 +28,4 @@ instance Show Ast where
     show (AstList asts) = "AstList " ++ show asts
     show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
     show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
-    show (Defun funcName args body) = "(defun " ++ funcName ++ " " ++ show args ++ " " ++ show body ++ ")"
+    show (Defun funcName args body) = "Defun " ++ funcName ++ " " ++ show args ++ " " ++ show body
