@@ -14,14 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cache Haskell dependencies
-        uses: actions/cache@v2
+      - name: Cache packages
+        uses: actions/cache@v3
         with:
-          path: |
-            ~/.stack
-          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-stack-
+          path: ~.caches
+            ~.wrapper
 
       - name: Setup Haskell
         uses: haskell-actions/setup@v2
@@ -31,20 +28,17 @@ jobs:
           stack-version: 'latest'
 
       - name: Install project dependencies
-        run: |
+        run: sudo apt-get update
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
-          stack init
-          stack setup
-          stack install
+          stack install --dependencies-only
 
       - name: Run "make test" for Haskell
         working-directory: ${{ github.workspace }}
         run: make test
 
       - name: Package artifacts
-        run: |
-          mkdir -p packaged
+        run: mkdir -p packaged
           find artifacts -type f -exec cp {} packaged \;
           tar czf packaged.tar.gz -C packaged .
 
@@ -54,8 +48,7 @@ jobs:
         with:
           tag_name: v${{ github.ref }}
           release_name: Release v${{ github.ref }}
-          body: |
-            Release v${{ github.ref }}
+          body: Release v${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
