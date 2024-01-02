@@ -14,11 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cache packages
+      - name: Cache Haskell modules
+        id: cache-haskell
         uses: actions/cache@v3
+        env:
+          cache-name: Cache Haskell Modules
         with:
-          path: ~.caches
-            ~.wrapper
+          path: ~/.haskell
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
       - name: Setup Haskell
         uses: haskell-actions/setup@v2
@@ -29,9 +36,10 @@ jobs:
 
       - name: Install project dependencies
         run: sudo apt-get update
-          sudo apt-get update
           sudo apt-get install -y libgmp-dev
-          stack install --dependencies-only
+          stack init
+          stack setup
+          stack install
 
       - name: Run "make test" for Haskell
         working-directory: ${{ github.workspace }}
