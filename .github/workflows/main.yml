@@ -35,5 +35,11 @@ jobs:
 
       - name: Upload assets to a Release
         uses: AButler/upload-release-assets@v3.0
-            
+
+  build:
+    steps:
+      - uses: AButler/upload-release-assets@v3.0
+        with:
+          files: "artifacts/*;packages/*.nupkg"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
             
