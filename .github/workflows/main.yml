@@ -34,5 +34,6 @@ jobs:
         run: make test
 
       - name: github-action-publish-binaries
+        working-directory: ${{ github.workspace }}
         uses: skx/github-action-publish-binaries@release-2.0
             
