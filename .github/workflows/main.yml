@@ -2,8 +2,6 @@ name: Haskell CI
 
 on:
   push:
-    tags:
-      - 'v*'
     branches:
       - main
       - 0-dev
@@ -35,25 +33,24 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: make test
 
-      - name: Create a Release in a GitHub Action
-        uses: comnoco/create-release-action@v2.0.5
-      
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
+        with:
+          tag_name: v${{ github.ref }}
+          release_name: Release v${{ github.ref }}
+          body: |
+            Release v${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
-          draft: false
-          prerelease: false
 
-            
+      - name: Upload assets to the Release
+        id: upload_assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/*
+          asset_name: my_asset_name.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
