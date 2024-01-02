@@ -33,13 +33,17 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: make test
 
-      - name: Upload assets to a Release
-        uses: AButler/upload-release-assets@v3.0
-
-  build:
-    steps:
-      - uses: AButler/upload-release-assets@v3.0
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          files: "artifacts/*;packages/*.nupkg"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            artifacts/*
+            packages/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get the created release ID
+        run: echo "Release ID - ${{ steps.create_release.outputs.id }}"
+
             
