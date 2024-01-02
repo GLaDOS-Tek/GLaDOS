@@ -33,7 +33,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: make test
 
-      - name: github-action-publish-binaries
-        working-directory: ${{ github.workspace }}
-        uses: skx/github-action-publish-binaries@release-2.0
+      - name: Upload assets to a Release
+        uses: AButler/upload-release-assets@v3.0
+            
             
