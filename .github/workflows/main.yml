@@ -41,26 +41,13 @@ jobs:
           name: glados-binary
           path: ./glados
 
-      - name: Cache cabal
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-cabal
-        with:
-          path: ~/.cabal
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
       - name: Cache haskell
         uses: actions/cache@v3.3.2
         with:
           path: |
-            ~/.cabal/store
             ~/.ghc
           restore-keys: |
-            cabal-${{ runner.os }}-            
+            ${{ runner.os }}-ghc-        
 
       - name: Cache Stack build artifacts
         uses: actions/cache@v2
