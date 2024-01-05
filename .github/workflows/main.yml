@@ -46,8 +46,9 @@ jobs:
         with:
           path: |
             ~/.ghc
+          key: ${{ runner.os }}-ghc-${{ hashFiles('**/*.cabal') }}
           restore-keys: |
-            ${{ runner.os }}-ghc-        
+            ${{ runner.os }}-ghc-    
 
       - name: Cache Stack build artifacts
         uses: actions/cache@v2
