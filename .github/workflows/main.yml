@@ -6,7 +6,7 @@ on:
       - main
       - 0-dev
 env:
-  MIRROR_URL: git@github.com:Antoine-Girard/test-glados.git
+  MIRROR_URL: git@github.com:knightartefact/test.git
 
 jobs:
   build-and-test:
@@ -59,16 +59,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stack-
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev
-          stack init
-          stack setup
-          stack install
-
-
-
   release:
     name: Release project
     runs-on: ubuntu-20.04
@@ -101,8 +91,6 @@ jobs:
           asset_path: ./glados
           asset_name: glados-${{ runner.os }}
           asset_content_type: application/zip
-
-
 
   push:
     runs-on: ubuntu-latest
