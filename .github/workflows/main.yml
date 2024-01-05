@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - 0-dev
+env:
+  MIRROR_URL: git@github.com:Antoine-Girard/test-glados.git
 
 jobs:
   build-and-test:
