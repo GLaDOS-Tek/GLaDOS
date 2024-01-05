@@ -6,7 +6,7 @@ on:
       - main
       - 0-dev
 env:
-  MIRROR_URL: git@github.com:knightartefact/test.git
+  MIRROR_URL: "git@github.com:knightartefact/test.git"
 
 jobs:
   build-and-test:
