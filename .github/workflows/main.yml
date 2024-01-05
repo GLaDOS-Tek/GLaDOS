@@ -1,25 +1,27 @@
 name: Haskell CI
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - 0-dev
 
 jobs:
-  test_on_push:
-    runs-on: ubuntu-latest
+  build:
+    name: Build and test
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Haskell
-        uses: haskell-actions/setup@v2
+      - name: Cache haskell
+        uses: actions/cache@v3.3.2
         with:
-          ghc-version: '8.8.4'
-          enable-stack: true
-          stack-version: 'latest'
+          path: |
+            ~/.ghc
+          key: ${{ runner.os }}-ghc-${{ hashFiles('**/*.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-ghc-    
 
       - name: Cache Stack build artifacts
         uses: actions/cache@v2
@@ -30,39 +32,52 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stack-
 
-      - name: Install project dependencies
-        run: sudo apt-get update
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2.6.0
+        with:
+          ghc-version: '9.4.8'
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
           sudo apt-get install -y libgmp-dev
-          stack init
-          stack setup
-          stack install
 
-      - name: Run "make test" for unit tests
-        working-directory: ${{ github.workspace }}
-        run: make test
+      - name: Build binary
+        run: make
 
-      - name: Package artifacts
-        run: mkdir -p packaged
-          find artifacts -type f -exec cp {} packaged \;
-          tar czf packaged.tar.gz -C packaged .
+
+
+  release:
+    name: Release project
+    runs-on: ubuntu-20.04
+    needs: [build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Create Release
         id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: actions/create-release@v1
         with:
-          tag_name: v${{ github.ref }}
-          release_name: Release v${{ github.ref }}
-          body: Release v${{ github.ref }}
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glados-binary
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload assets to the Release
-        id: upload_assets
-        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: packaged.tar.gz
-          asset_name: my_asset_name.tar.gz
-          asset_content_type: application/gzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          asset_path: ./glados
+          asset_name: glados-${{ runner.os }}
+          asset_content_type: application/zip
