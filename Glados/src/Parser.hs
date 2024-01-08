@@ -1,13 +1,16 @@
-module Parser (generalParser, SExpr(..), exprParser, parseChar, parseAnyChar, parseMany, parseSome, parseInt, parseList, parseString) where
+module Parser (SExpr(..), parseChar, parseAnyChar, parseMany, parseSome, parseInt) where
 
 -- IMPORTS
 
 import Text.Read
 import Structs (SExpr(..))
+import Debug.Trace (trace)
 
 -- CUSTOM TYPE
 
-type Parser a = String -> Maybe (a, String)
+data Parser a = Parser {
+    runParser :: String -> Maybe (a , String)
+}
 
 -- GLOBAL VAR
 
@@ -22,94 +25,94 @@ valid_char = filter (`notElem` banned_char) ascii_char
 
 -- FUNCTIONS
 
-parseChar :: Char -> Parser Char
-parseChar c (x:xs)
-    | c == x = Just (c, xs)
-    | otherwise = Nothing
-parseChar _ _ = Nothing
+getRestOfString :: String -> String
+getRestOfString (' ':xs) = getRestOfString xs
+getRestOfString str = drop 1 $ dropWhile (/= ' ') str
 
-parseOr :: Parser a -> Parser a -> Parser a
-parseOr p1 p2 s = case p1 s of
-    Just (x, xs) -> Just (x, xs)
-    Nothing -> p2 s
+getFirstWord :: String -> String
+getFirstWord "" = ""
+getFirstWord (' ':xs) = getFirstWord xs
+getFirstWord ('"':str) = case last str of
+    '"' -> '"' : takeWhile (/= '"') str ++ "\""
+    _ -> '"' : takeWhile (/= ' ') str
+getFirstWord str = takeWhile (/= ' ') str
 
-parseAnyChar :: String -> Parser Char
-parseAnyChar (x:xs) str = parseOr (parseChar x) (parseAnyChar xs) str
-parseAnyChar _ _ = Nothing
+isLiteralEnd :: String -> Bool
+isLiteralEnd "" = False
+isLiteralEnd "\"" = True
+isLiteralEnd ('\"':xs) = False
+isLiteralEnd str = isLiteralEnd $ tail str
 
-parseMany :: Parser a -> Parser [a]
-parseMany p s = case p s of
-    Just (x, xs) -> case parseMany p xs of
-        Just (y, ys) -> Just (x:y, ys)
-        Nothing -> Just ([x], xs)
-    Nothing -> Just ([], s)
+isLiteral :: String -> Bool
+isLiteral "\"" = False
+isLiteral ('\"':xs) = isLiteralEnd xs
+isLiteral _ = False
 
-parseSome :: Parser a -> Parser [a]
-parseSome p s = case p s of
-    Just (x, xs) -> case parseMany p xs of
-        Just (y, ys) -> Just ((x:y), ys)
-        Nothing -> Just ([x], xs)
-    Nothing -> Nothing
+literalToString :: String -> Maybe String
+literalToString str = if head str == '"' && last str == '"'
+    then Just $ tail $ init str
+    else Nothing
 
-readUInt :: String -> String -> Maybe (Int, String)
-readUInt s xs = case (readMaybe s :: Maybe Int) of
-        Just nb -> Just (nb, xs)
-        Nothing -> Nothing
-
-parseUInt :: Parser Int -- parse an unsigned Int
-parseUInt s = case (parseSome(parseAnyChar ['0'..'9']) s) of
-    Just (x, (' ':xs)) -> readUInt x (' ':xs)
-    Just (x, (')':xs)) -> readUInt x (')':xs)
-    Just (x, ('\n':xs)) -> readUInt x ('\n':xs)
-    Just (x, ('\t':xs)) -> readUInt x ('\t':xs)
-    Just (x, "") -> readUInt x ""
-    _ -> Nothing
-
-parseInt :: Parser Int -- parse a signed Int
-parseInt ('-':xs) = case parseUInt xs of
-    Just (a, b) -> Just ((-a), b)
-    Nothing -> Nothing
-parseInt s = parseUInt s
-
-getBiggerLine :: Int -> SExpr -> Int
-getBiggerLine _ (SymbolExpr _ newLine) = newLine
-getBiggerLine _ (IntExpr _ newLine) = newLine
-getBiggerLine _ (StrExpr _ newLine) = newLine
-getBiggerLine line (ExprList list) = getBiggerLine line (last list)
-
-parseList :: Int -> Parser [SExpr]
-parseList line ('(':xs) = case generalParser line xs of
-    Just (a, ')':as) -> Just (a, as)
-    _ -> Nothing
-parseList _ _ = Nothing
-
-parseString :: Int -> Parser SExpr
-parseString _ "" = Nothing
-parseString _ (' ':_) = Nothing
-parseString l ('\"':xs) = case parseSome (parseAnyChar (filter (/= '\"') ascii_char)) xs of
-    Just (a, '\"':as) -> Just (StrExpr a l, as)
-    _ -> Nothing
-parseString l s = case parseSome (parseAnyChar valid_char) s of
-    Just (a, as) -> Just (SymbolExpr a l, as)
-    _ -> Nothing
-
-exprParser :: Int -> Parser SExpr
-exprParser line str = case parseInt str of
-    Just (i, is) -> Just ((IntExpr i line), is)
-    Nothing -> case parseString line str of
-        Just (s, ss) -> Just (s, ss)
-        Nothing -> case (parseList line str) of
-            Just (list, ls) -> Just (ExprList list, ls)
+parseOr :: Parser a -> Parser b -> Parser (Either a b)
+parseOr p1 p2 = Parser $ \str ->
+    case runParser p1 str of
+        Just (a, b) -> Just (Left a, b)
+        Nothing -> case runParser p2 str of
+            Just (a, b) -> Just (Right a, b)
             Nothing -> Nothing
 
-generalParser :: Int -> Parser [SExpr]
-generalParser _ "" = Just ([], "")
-generalParser _ (')':xs) = Just ([], ')':xs)
-generalParser line ('\n':xs) = generalParser (line + 1) xs
-generalParser line ('\t':xs) = generalParser line xs
-generalParser line (' ':xs) = generalParser line xs
-generalParser line str = case exprParser line str of
-    Just (a, as) -> case generalParser (getBiggerLine line a) as of
-        Just (b, bs) -> Just ([a] ++ b, bs)
+parseChar :: Char -> Parser Char
+parseChar c = Parser $ \str ->
+    case str of
+        (x:xs) -> if x == c
+            then Just (x, xs)
+            else Nothing
+        _ -> Nothing
+
+parseAnyChar :: String -> Parser Char
+parseAnyChar list = Parser $ \str ->
+    case (head str) `elem` list of
+        True -> Just (head str, tail str)
+        False -> Nothing
+
+parseInt :: Parser Int
+parseInt = Parser $ \str ->
+    case (readMaybe (getFirstWord str) :: Maybe Int) of
+        Just nbr -> Just (nbr, getRestOfString str)
         Nothing -> Nothing
-    _ -> Nothing
+
+parseMany :: Parser a -> Parser [a]
+parseMany parser = Parser $ \str ->
+    case runParser parser str of
+        Just (x, xs) -> case runParser (parseMany parser) xs of
+            Just (y, ys) -> Just (x:y, ys)
+            Nothing -> Just ([x], xs)
+        Nothing -> Just ([], str)
+
+parseSome :: Parser a -> Parser [a]
+parseSome parser = Parser $ \str ->
+    case runParser parser str of
+        Just (x, xs) -> case runParser (parseMany parser) xs of
+            Just (y, ys) -> Just ((x:y), ys)
+            Nothing -> Just ([x], xs)
+        Nothing -> Nothing
+
+parseChain :: Parser a -> Parser [a]
+parseChain parser = Parser $ \str ->
+    case runParser parser str of
+        Just (x, xs) -> case runParser (parseChain parser) xs of
+            Just (y, ys) -> Just (x:y, ys)
+            Nothing -> Just ([x], xs)
+        Nothing -> Nothing
+
+parseLiteral :: Parser String
+parseLiteral = Parser $ \str ->
+    case (isLiteral $ getFirstWord str) of
+        True -> case (literalToString $ getFirstWord str) of
+            Just lit -> Just (lit, getRestOfString str)
+            _ -> Nothing
+        _ -> Nothing
+
+parseSymbol :: Parser String
+parseSymbol = Parser $ \str -> Just (getFirstWord str, getRestOfString str)
+
