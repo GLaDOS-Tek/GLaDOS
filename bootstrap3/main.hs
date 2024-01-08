@@ -51,6 +51,7 @@ data Instruction =
     | Ret
     | JumpIfFalse Int
     | PushArg Int
+    | PushEnv String
 instance Show Instruction where
     show (Push x) = "Push " ++ show x
     show (Pop) = "Pop"
@@ -61,92 +62,103 @@ type Stack = [Value]
 
 type Insts = [Instruction]
 
+type Env = [(String, Value)]
+
 -- FUNCTIONS
 
-jumpTo :: Args -> Int -> Insts -> Stack -> Either String Value
-jumpTo args 0 insts stack = exec args insts stack
-jumpTo _ _ [] stack = Left "jumped out of bounds"
-jumpTo args n insts stack = jumpTo args (n - 1) (tail insts) stack
+jumpTo :: Args -> Int -> Insts -> Stack -> Env -> Either String Value
+jumpTo args 0 insts stack env = exec args insts stack env
+jumpTo _ _ [] stack _ = Left "jumped out of bounds"
+jumpTo args n insts stack env = jumpTo args (n - 1) (tail insts) stack env
 
-exec :: Args -> Insts -> Stack -> Either String Value
-exec args [] (x:xs) = Left "finished without ret"
-exec args ((Push x):xs) stack = exec args xs (x:stack)
-exec args ((Pop):xs) stack = case stack of
-    (_:ss) -> exec args xs ss
+
+exec :: Args -> Insts -> Stack -> Env -> Either String Value
+exec args [] (x:xs) _ = Left "finished without ret"
+exec args ((Push x):xs) stack env = exec args xs (x:stack) env
+exec args ((Pop):xs) stack env = case stack of
+    (_:ss) -> exec args xs ss env
     _ -> Left "Nothing to pop"
-exec args ((Call):xs) stack = case stack of
-    (Operator op:stack') -> executeOperator args xs op stack'
-    (Function insts:stack') -> exec args insts stack'
+exec args ((Call):xs) stack env = case stack of
+    (Operator op:stack') -> executeOperator args xs op stack' env
+    (Function insts:stack') -> exec args insts stack' env
     _ -> Left "Call needs an Operator or Function on the stack"
-exec args ((JumpIfFalse n):xs) stack = case stack of
-    (Boolean False:stack) -> if n >= 0 then jumpTo args n xs stack else Left "Negative jumps"
-    (Boolean True:stack) -> exec args xs stack
+exec args ((JumpIfFalse n):xs) stack env = case stack of
+    (Boolean False:stack') -> if n >= 0 then jumpTo args n xs stack' env else Left "Negative jumps"
+    (Boolean True:stack') -> exec args xs stack' env
     _ -> Left "JumpIfFalse needs Boolean"
-exec args (Ret:_) stack = case stack of
+exec args (Ret:_) stack env = case stack of
     (x:_) -> Right x
     _ -> Left "Nothing to return"
-exec args ((PushArg index):xs) stack = case args of
+exec args ((PushArg index):xs) stack env = case args of
     [] -> Left "No arguments available"
-    _ -> exec args xs ((args !! index) : stack)
-exec _ _ _ = Left "fail"
+    _ -> exec args xs ((args !! index) : stack) env
+exec args ((PushEnv var):xs) stack env = case lookup var env of
+    Just value -> exec args xs (value : stack) env
+    Nothing -> Left $ "Variable '" ++ var ++ "' not found in environment"
+exec _ _ _ _ = Left "fail"
 
-executeOperator :: Args -> Insts -> Operators -> Stack -> Either String Value
-executeOperator args xs op stack =
+executeOperator :: Args -> Insts -> Operators -> Stack -> Env -> Either String Value
+executeOperator args xs op stack env =
     case op of
-        Add -> executeBinaryOp (\x y -> Right (Numerical (x + y))) args xs stack
-        Sub -> executeBinaryOp (\x y -> Right (Numerical (x - y))) args xs stack
-        Mul -> executeBinaryOp (\x y -> Right (Numerical (x * y))) args xs stack
-        Div -> executeDivOp args xs stack
-        Eq  -> executeBinaryOp (\x y -> Right (Boolean (x == y))) args xs stack
-        Ne  -> executeBinaryOp (\x y -> Right (Boolean (x /= y))) args xs stack
-        Lt  -> executeBinaryOp (\x y -> Right (Boolean (x < y))) args xs stack
-        Gt  -> executeBinaryOp (\x y -> Right (Boolean (x > y))) args xs stack
-        Le  -> executeBinaryOp (\x y -> Right (Boolean (x <= y))) args xs stack
-        Ge  -> executeBinaryOp (\x y -> Right (Boolean (x >= y))) args xs stack
-        And -> executeBooleanOp (&&) args xs stack
-        Or  -> executeBooleanOp (||) args xs stack
+        Add -> executeBinaryOp (\x y -> Right (Numerical (x + y))) args xs stack env
+        Sub -> executeBinaryOp (\x y -> Right (Numerical (x - y))) args xs stack env
+        Mul -> executeBinaryOp (\x y -> Right (Numerical (x * y))) args xs stack env
+        Div -> executeDivOp args xs stack env
+        Eq  -> executeBinaryOp (\x y -> Right (Boolean (x == y))) args xs stack env
+        Ne  -> executeBinaryOp (\x y -> Right (Boolean (x /= y))) args xs stack env
+        Lt  -> executeBinaryOp (\x y -> Right (Boolean (x < y))) args xs stack env
+        Gt  -> executeBinaryOp (\x y -> Right (Boolean (x > y))) args xs stack env
+        Le  -> executeBinaryOp (\x y -> Right (Boolean (x <= y))) args xs stack env
+        Ge  -> executeBinaryOp (\x y -> Right (Boolean (x >= y))) args xs stack env
+        And -> executeBooleanOp (&&) args xs stack env
+        Or  -> executeBooleanOp (||) args xs stack env
 
-executeDivOp :: Args -> Insts -> Stack -> Either String Value
-executeDivOp args xs stack = case stack of
+executeDivOp :: Args -> Insts -> Stack -> Env -> Either String Value
+executeDivOp args xs stack env = case stack of
     (Numerical 0:Numerical _:_) -> Left "Division by zero"
-    (Numerical y:Numerical x:stack') -> exec args xs (Numerical (x `div` y) : stack')
+    (Numerical y:Numerical x:stack') -> exec args xs (Numerical (x `div` y) : stack') env
     _ -> Left "Div operation needs two Numericals"
 
-executeBinaryOp :: (Int -> Int -> Either String Value) -> Args -> Insts -> Stack -> Either String Value
-executeBinaryOp op args xs stack = case stack of
-    (Numerical x:Numerical y:stack') -> op x y >>= \result -> exec args xs (result : stack')
+executeBinaryOp :: (Int -> Int -> Either String Value) -> Args -> Insts -> Stack -> Env -> Either String Value
+executeBinaryOp op args xs stack env = case stack of
+    (Numerical x:Numerical y:stack') -> op x y >>= \result -> exec args xs (result : stack') env
     _ -> Left "Binary operation needs two Numericals"
 
-executeBooleanOp :: (Bool -> Bool -> Bool) -> Args -> Insts -> Stack -> Either String Value
-executeBooleanOp op args xs stack = case stack of
-    (Boolean x:Boolean y:stack') -> exec args xs (Boolean (op x y) : stack')
+executeBooleanOp :: (Bool -> Bool -> Bool) -> Args -> Insts -> Stack -> Env -> Either String Value
+executeBooleanOp op args xs stack env = case stack of
+    (Boolean x:Boolean y:stack') -> exec args xs (Boolean (op x y) : stack') env
     _ -> Left "Boolean operation needs two Booleans"
 
 main :: IO ()
 main = do
-    let arguments = [Numerical (-42)]
-    let absCodeFunction =
-            [ PushArg 0
-            , Push (Numerical 0)
-            , Push (Operator Lt)
-            , Call
-            , JumpIfFalse 2
-            , PushArg 0
-            , Ret
-            , PushArg 0
-            , Push (Numerical (-1))
-            , Push (Operator Mul)
-            , Call
-            , Ret
-            ]
+    let arguments = [Numerical 5]
+
+    let factFunction =
+            [PushArg 0,
+             Push (Numerical 1),
+             Push (Operator Ge),
+             Call,
+             JumpIfFalse 2,
+             Push (Numerical 1),
+             Ret,
+             PushArg 0,
+             Push (Numerical 1),
+             Push (Operator Sub),
+             PushEnv "fact",
+             Call,
+             PushArg 0,
+             Push (Operator Mul),
+             Call,
+             Ret]
+
+    let env = [("fact", Function factFunction)]
 
     let instructions =
-            [ Push (Numerical (-42))
-            , Push (Function absCodeFunction)
-            , Call
-            , Ret
-            ]
+            [PushArg 0,
+             PushEnv "fact",
+             Call,
+             Ret]
 
-    case exec arguments instructions [] of
+    case exec arguments instructions [] env of
         Left errorMsg -> putStrLn $ "Error: " ++ errorMsg
         Right result -> print result
