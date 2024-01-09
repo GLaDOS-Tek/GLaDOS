@@ -1,16 +1,45 @@
-module Parser (SExpr(..), parseChar, parseAnyChar, parseMany, parseSome, parseInt) where
+module Parser (SExpr(..)) where
 
 -- IMPORTS
 
-import Text.Read
-import Structs (SExpr(..))
+import Text.Read (readMaybe)
+import Structs (SExpr(..), Line)
 import Debug.Trace (trace)
+import Control.Applicative (Alternative(..), empty, (<|>))
 
 -- CUSTOM TYPE
+
+data Token = Token String Line
+    deriving (Show)
 
 data Parser a = Parser {
     runParser :: String -> Maybe (a , String)
 }
+instance Functor Parser where
+    fmap f (Parser p) = Parser $ \str ->
+        case p str of
+            Just (result, rest) -> Just (f result, rest)
+            Nothing -> Nothing
+instance Applicative Parser where
+    pure v = Parser $ \str -> Just (v, str)
+    (Parser p1) <*> (Parser p2) = Parser $ \str ->
+        case p1 str of
+            Just (f, rest1) -> case p2 rest1 of
+                Just (result, rest2) -> Just (f result, rest2)
+                Nothing -> Nothing
+            Nothing -> Nothing
+instance Alternative Parser where
+    empty = Parser $ \_ -> Nothing
+    (Parser p1) <|> (Parser p2) = Parser $ \str ->
+        case p1 str of
+            Nothing -> p2 str
+            success -> success
+instance Monad Parser where
+    return = pure
+    (Parser p) >>= f = Parser $ \str ->
+        case p str of
+            Just (result, rest) -> runParser (f result) rest
+            Nothing -> Nothing
 
 -- GLOBAL VAR
 
@@ -37,6 +66,12 @@ getFirstWord ('"':str) = case last str of
     _ -> '"' : takeWhile (/= ' ') str
 getFirstWord str = takeWhile (/= ' ') str
 
+cleanString :: Char -> String -> String
+cleanString _ "" = ""
+cleanString c (x:xs) = if x == c
+    then cleanString c xs
+    else x : cleanString c xs
+
 isLiteralEnd :: String -> Bool
 isLiteralEnd "" = False
 isLiteralEnd "\"" = True
@@ -52,14 +87,6 @@ literalToString :: String -> Maybe String
 literalToString str = if head str == '"' && last str == '"'
     then Just $ tail $ init str
     else Nothing
-
-parseOr :: Parser a -> Parser b -> Parser (Either a b)
-parseOr p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Just (a, b) -> Just (Left a, b)
-        Nothing -> case runParser p2 str of
-            Just (a, b) -> Just (Right a, b)
-            Nothing -> Nothing
 
 parseChar :: Char -> Parser Char
 parseChar c = Parser $ \str ->
@@ -115,4 +142,3 @@ parseLiteral = Parser $ \str ->
 
 parseSymbol :: Parser String
 parseSymbol = Parser $ \str -> Just (getFirstWord str, getRestOfString str)
-

@@ -1,4 +1,4 @@
-module Structs (SExpr(..)) where
+module Structs (SExpr(..), Line) where
 
 type Line = Int
 
