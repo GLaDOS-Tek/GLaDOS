@@ -71,6 +71,12 @@ jumpTo args 0 insts stack env = exec args insts stack env
 jumpTo _ _ [] stack _ = Left "jumped out of bounds"
 jumpTo args n insts stack env = jumpTo args (n - 1) (tail insts) stack env
 
+execFunction :: Args -> Insts -> Stack -> Env -> Either String Value
+execFunction args xs stack env =
+    case stack of
+        (lastValue:restOfStack) ->
+            exec (lastValue:args) xs restOfStack env
+        _ -> Left "Function call needs an element on the stack"
 
 exec :: Args -> Insts -> Stack -> Env -> Either String Value
 exec args [] (x:xs) _ = Left "finished without ret"
@@ -80,7 +86,7 @@ exec args ((Pop):xs) stack env = case stack of
     _ -> Left "Nothing to pop"
 exec args ((Call):xs) stack env = case stack of
     (Operator op:stack') -> executeOperator args xs op stack' env
-    (Function insts:stack') -> exec args insts stack' env
+    (Function insts:stack') -> execFunction args insts stack' env
     _ -> Left "Call needs an Operator or Function on the stack"
 exec args ((JumpIfFalse n):xs) stack env = case stack of
     (Boolean False:stack') -> if n >= 0 then jumpTo args n xs stack' env else Left "Negative jumps"
@@ -131,34 +137,63 @@ executeBooleanOp op args xs stack env = case stack of
 
 main :: IO ()
 main = do
-    let arguments = [Numerical 5]
-
-    let factFunction =
-            [PushArg 0,
-             Push (Numerical 1),
-             Push (Operator Ge),
+    let incrementFunction =
+            [Push (Numerical 2),
+             PushArg 0,
+             Push (Operator Eq),
              Call,
              JumpIfFalse 2,
-             Push (Numerical 1),
+             PushArg 0,
              Ret,
              PushArg 0,
              Push (Numerical 1),
-             Push (Operator Sub),
-             PushEnv "fact",
+             Push (Operator Add),
              Call,
-             PushArg 0,
-             Push (Operator Mul),
+             Push (Function incrementFunction),
              Call,
              Ret]
+    
+    let factFunction =
+         [PushArg 0,
+         Push (Numerical 1),
+         Push (Operator Eq),
+         Call,
+         JumpIfFalse 2,
+         Push (Numerical 1),
+         Ret,
+         PushArg 0,
+         Push (Numerical 1),
+         Push (Operator Sub),
+         Call,
+         Push (Function factFunction),
+         Call,
+         PushArg 0,
+         Push (Operator Mul),
+         Call,
+         Ret]
+    
+    let absCode =
+         [PushArg 0,
+            Push (Numerical 0),
+            Push (Operator Lt),
+            Call,
+            JumpIfFalse 2,
+            PushArg 0,
+            Ret,
+            PushArg 0,
+            Push (Numerical (-1)),
+            Push (Operator Mul),
+            Call,
+            Ret]
 
-    let env = [("fact", Function factFunction)]
+    let env = [("increment", Function incrementFunction)]
 
     let instructions =
-            [PushArg 0,
-             PushEnv "fact",
+            [Push (Numerical (-10)),
+             Push (Function absCode),
              Call,
              Ret]
 
-    case exec arguments instructions [] env of
+    case exec [] instructions [] env of
         Left errorMsg -> putStrLn $ "Error: " ++ errorMsg
         Right result -> print result
