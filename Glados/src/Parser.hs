@@ -1,115 +1,158 @@
-module Parser (generalParser, SExpr(..), exprParser, parseChar, parseAnyChar, parseMany, parseSome, parseInt, parseList, parseString) where
+module Parser (SExpr(..)) where
 
 -- IMPORTS
 
-import Text.Read
-import Structs (SExpr(..))
+import Text.Read (readMaybe)
+import Structs (SExpr(..), Line)
+import Control.Applicative (Alternative(..), empty, (<|>))
+import Tools (multiElem, replaceChar, first)
 
 -- CUSTOM TYPE
 
-type Parser a = String -> Maybe (a, String)
+data Token = Token String Line
+    deriving (Show)
+
+data Parser a = Parser {
+    runParser :: [Token] -> Maybe (a, [Token])
+}
+instance Functor Parser where
+    fmap f (Parser p) = Parser $ \token -> fmap (first f) (p token)
+instance Applicative Parser where
+    pure v = Parser $ \_ -> Just (v, [])
+    (Parser p1) <*> (Parser p2) = Parser $ \token ->
+        case p1 token of
+            Just (f, rest1) -> case p2 rest1 of
+                Just (v, rest2) -> Just (f v, rest2)
+                Nothing -> Nothing
+            Nothing -> Nothing
+instance Alternative Parser where
+    empty = Parser $ \_ -> Nothing
+    (Parser p1) <|> (Parser p2) = Parser $ \token -> p1 token <|> p2 token
+instance Monad Parser where
+    return = pure
+    (Parser p) >>= f = Parser $ \token ->
+        case p token of
+            Just (v, rest) -> runParser (f v) rest
+            Nothing -> Nothing
 
 -- GLOBAL VAR
 
-ascii_char :: [Char]
-ascii_char = enumFromTo ' ' '~'
-
 banned_char :: [Char]
-banned_char = [' ', '(', ')', '\"']
-
-valid_char :: [Char]
-valid_char = filter (`notElem` banned_char) ascii_char
+banned_char = [' ', '(', ')', '\"', '\'', '`', ';', '{', '}', '[', ']', '\n', '\t', '\r']
 
 -- FUNCTIONS
 
-parseChar :: Char -> Parser Char
-parseChar c (x:xs)
-    | c == x = Just (c, xs)
-    | otherwise = Nothing
-parseChar _ _ = Nothing
+getRestOfString :: String -> String
+getRestOfString (' ':xs) = getRestOfString xs
+getRestOfString ('\n':xs) = getRestOfString xs
+getRestOfString ('\"':xs) = dropWhile (\c -> c /= ' ' && c /= '\n') (dropWhile (/= '\"') xs)
+getRestOfString str = dropWhile (\c -> c /= ' ' && c /= '\n') str
 
-parseOr :: Parser a -> Parser a -> Parser a
-parseOr p1 p2 s = case p1 s of
-    Just (x, xs) -> Just (x, xs)
-    Nothing -> p2 s
+getFirstToken :: String -> String
+getFirstToken "" = ""
+getFirstToken (' ':xs) = getFirstToken xs
+getFirstToken ('\n':xs) = getFirstToken xs
+getFirstToken ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ takeWhile (\c -> c /= ' ' && c /= '\n') (dropWhile (/= '\"') xs)
+getFirstToken str = takeWhile (\c -> c /= ' ' && c /= '\n') str
 
-parseAnyChar :: String -> Parser Char
-parseAnyChar (x:xs) str = parseOr (parseChar x) (parseAnyChar xs) str
-parseAnyChar _ _ = Nothing
+getLiteral :: String -> String
+getLiteral "" = ""
+getLiteral ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ "\""
+getLiteral str = str
+
+skipLiteral :: String -> String
+skipLiteral "" = ""
+skipLiteral ('\"':xs) = tail $ dropWhile (/= '\"') xs
+skipLiteral str = str
+
+spacesAroundLists :: String -> String
+spacesAroundLists "" = ""
+spacesAroundLists ('\"':xs) = getLiteral ('\"':xs) ++ (spacesAroundLists $ skipLiteral ('\"':xs))
+spacesAroundLists ('(':xs) = " ( " ++ spacesAroundLists xs
+spacesAroundLists (')':xs) = " ) " ++ spacesAroundLists xs
+spacesAroundLists ('[':xs) = " [ " ++ spacesAroundLists xs
+spacesAroundLists (']':xs) = " ] " ++ spacesAroundLists xs
+spacesAroundLists ('{':xs) = " { " ++ spacesAroundLists xs
+spacesAroundLists ('}':xs) = " } " ++ spacesAroundLists xs
+spacesAroundLists (x:xs) = x : spacesAroundLists xs
+
+customWords :: Line -> String -> [Token]
+customWords _ "" = []
+customWords line (' ':xs) = customWords line xs
+customWords line ('\n':xs) = customWords (line + 1) xs
+customWords line str = Token (getFirstToken str) line : customWords line (getRestOfString str)
+
+stringToTokens :: String -> [Token]
+stringToTokens str = customWords 1 (spacesAroundLists (replaceChar '\t' ' ' str))
+
+isSymbol :: Token -> Bool
+isSymbol (Token "" _) = False
+isSymbol (Token str l) = not $ multiElem str banned_char
+
+isLiteral :: String -> Bool
+isLiteral "" = False
+isLiteral "\"" = False
+isLiteral str = head str == '"' && last str == '"'
+
+-- if success, return the line number of the token
+isChar :: Char -> Parser Int
+isChar c = Parser $ \((Token x l):rest) ->
+    if x == [c]
+        then Just (l, rest)
+        else Nothing
+
+runParserSafe :: Parser a -> [Token] -> Maybe (a, [Token])
+runParserSafe p [] = Nothing
+runParserSafe p tokens = runParser p tokens
+
+parseNumber :: Parser SExpr
+parseNumber = Parser $ \((Token str l):rest) ->
+    case (readMaybe (str) :: Maybe Int) of
+        Just nbr -> Just (Number nbr l, rest)
+        Nothing -> Nothing
+
+parseSymbol :: Parser SExpr
+parseSymbol = Parser $ \((Token str l):rest) ->
+    if isSymbol (Token str l)
+        then Just (Symbol str l, rest)
+        else Nothing
+
+parseLiteral :: Parser SExpr
+parseLiteral = Parser $ \((Token str l):rest) ->
+    if isLiteral str
+        then Just (Literal (tail $ init str) l, rest)
+        else Nothing
 
 parseMany :: Parser a -> Parser [a]
-parseMany p s = case p s of
-    Just (x, xs) -> case parseMany p xs of
-        Just (y, ys) -> Just (x:y, ys)
-        Nothing -> Just ([x], xs)
-    Nothing -> Just ([], s)
+parseMany parser = Parser $ \tokens ->
+    case runParserSafe parser tokens of
+        Just (x, xs) -> case runParser (parseMany parser) xs of
+            Just (y, ys) -> Just (x:y, ys)
+            Nothing -> Just ([x], xs)
+        Nothing -> Just ([], tokens)
 
 parseSome :: Parser a -> Parser [a]
-parseSome p s = case p s of
-    Just (x, xs) -> case parseMany p xs of
-        Just (y, ys) -> Just ((x:y), ys)
-        Nothing -> Just ([x], xs)
-    Nothing -> Nothing
-
-readUInt :: String -> String -> Maybe (Int, String)
-readUInt s xs = case (readMaybe s :: Maybe Int) of
-        Just nb -> Just (nb, xs)
+parseSome parser = Parser $ \str ->
+    case runParser parser str of
+        Just (x, xs) -> case runParser (parseMany parser) xs of
+            Just (y, ys) -> Just ((x:y), ys)
+            Nothing -> Just ([x], xs)
         Nothing -> Nothing
 
-parseUInt :: Parser Int -- parse an unsigned Int
-parseUInt s = case (parseSome(parseAnyChar ['0'..'9']) s) of
-    Just (x, (' ':xs)) -> readUInt x (' ':xs)
-    Just (x, (')':xs)) -> readUInt x (')':xs)
-    Just (x, ('\n':xs)) -> readUInt x ('\n':xs)
-    Just (x, ('\t':xs)) -> readUInt x ('\t':xs)
-    Just (x, "") -> readUInt x ""
-    _ -> Nothing
+parseSExpr :: Parser SExpr
+parseSExpr = parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
 
-parseInt :: Parser Int -- parse a signed Int
-parseInt ('-':xs) = case parseUInt xs of
-    Just (a, b) -> Just ((-a), b)
-    Nothing -> Nothing
-parseInt s = parseUInt s
-
-getBiggerLine :: Int -> SExpr -> Int
-getBiggerLine _ (SymbolExpr _ newLine) = newLine
-getBiggerLine _ (IntExpr _ newLine) = newLine
-getBiggerLine _ (StrExpr _ newLine) = newLine
-getBiggerLine line (ExprList list) = getBiggerLine line (last list)
-
-parseList :: Int -> Parser [SExpr]
-parseList line ('(':xs) = case generalParser line xs of
-    Just (a, ')':as) -> Just (a, as)
-    _ -> Nothing
-parseList _ _ = Nothing
-
-parseString :: Int -> Parser SExpr
-parseString _ "" = Nothing
-parseString _ (' ':_) = Nothing
-parseString l ('\"':xs) = case parseSome (parseAnyChar (filter (/= '\"') ascii_char)) xs of
-    Just (a, '\"':as) -> Just (StrExpr a l, as)
-    _ -> Nothing
-parseString l s = case parseSome (parseAnyChar valid_char) s of
-    Just (a, as) -> Just (SymbolExpr a l, as)
-    _ -> Nothing
-
-exprParser :: Int -> Parser SExpr
-exprParser line str = case parseInt str of
-    Just (i, is) -> Just ((IntExpr i line), is)
-    Nothing -> case parseString line str of
-        Just (s, ss) -> Just (s, ss)
-        Nothing -> case (parseList line str) of
-            Just (list, ls) -> Just (ExprList list, ls)
-            Nothing -> Nothing
-
-generalParser :: Int -> Parser [SExpr]
-generalParser _ "" = Just ([], "")
-generalParser _ (')':xs) = Just ([], ')':xs)
-generalParser line ('\n':xs) = generalParser (line + 1) xs
-generalParser line ('\t':xs) = generalParser line xs
-generalParser line (' ':xs) = generalParser line xs
-generalParser line str = case exprParser line str of
-    Just (a, as) -> case generalParser (getBiggerLine line a) as of
-        Just (b, bs) -> Just ([a] ++ b, bs)
+parseList :: Char -> Char -> Parser SExpr
+parseList open close = Parser $ \(tokens) ->
+    case runParser (isChar open) tokens of
+        Just (l, rest) -> case runParser (parseMany parseSExpr) rest of
+            Just (x, xs) -> case runParser (isChar close) xs of
+                Just (y, ys) -> Just (List x, ys)
+                Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): no closing symbol")
+            Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): failed parse content")
         Nothing -> Nothing
-    _ -> Nothing
+
+generalParser :: String -> [SExpr]
+generalParser code = case runParser (parseMany parseSExpr) (stringToTokens code) of
+    Just (x, []) -> x
+    _ -> [] -- trace ("Error: Parsing failed")
