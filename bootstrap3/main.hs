@@ -190,16 +190,16 @@ main = do
             PushArg 1,
             Push (Operator Add),
             Call,
-            Push (Function func2),
+            PushEnv "fun2",
             Call,
             Ret]
 
-    let env = [("increment", Function incrementFunction)]
+    let env = [("fun", Function func), ("fun2", Function func2)]
 
     let instructions =
             [Push (Numerical 5),
              Push (Numerical 2),
-             Push (Function func),
+             PushEnv "fun",
              Call,
              Push (Numerical 1),
              Push (Operator Add),
