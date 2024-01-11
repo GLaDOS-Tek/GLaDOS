@@ -55,6 +55,16 @@ getFirstToken ('\n':xs) = getFirstToken xs
 getFirstToken ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ takeWhile (\c -> c /= ' ' && c /= '\n') (dropWhile (/= '\"') xs)
 getFirstToken str = takeWhile (\c -> c /= ' ' && c /= '\n') str
 
+spacesAroundLists :: String -> String
+spacesAroundLists "" = ""
+spacesAroundLists ('(':xs) = " ( " ++ spacesAroundLists xs
+spacesAroundLists (')':xs) = " ) " ++ spacesAroundLists xs
+spacesAroundLists ('[':xs) = " [ " ++ spacesAroundLists xs
+spacesAroundLists (']':xs) = " ] " ++ spacesAroundLists xs
+spacesAroundLists ('{':xs) = " { " ++ spacesAroundLists xs
+spacesAroundLists ('}':xs) = " } " ++ spacesAroundLists xs
+spacesAroundLists (x:xs) = x : spacesAroundLists xs
+
 customWords :: Line -> String -> [Token]
 customWords _ "" = []
 customWords line (' ':xs) = customWords line xs
@@ -62,7 +72,7 @@ customWords line ('\n':xs) = customWords (line + 1) xs
 customWords line str = Token (getFirstToken str) line : customWords line (getRestOfString str)
 
 stringToTokens :: String -> [Token]
-stringToTokens str = customWords 1 (replaceChar '\t' ' ' str)
+stringToTokens str = customWords 1 (spacesAroundLists (replaceChar '\t' ' ' str))
 
 isSymbol :: Token -> Bool
 isSymbol (Token "" _) = False
