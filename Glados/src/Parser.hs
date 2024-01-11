@@ -55,8 +55,19 @@ getFirstToken ('\n':xs) = getFirstToken xs
 getFirstToken ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ takeWhile (\c -> c /= ' ' && c /= '\n') (dropWhile (/= '\"') xs)
 getFirstToken str = takeWhile (\c -> c /= ' ' && c /= '\n') str
 
+getLiteral :: String -> String
+getLiteral "" = ""
+getLiteral ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ "\""
+getLiteral str = str
+
+skipLiteral :: String -> String
+skipLiteral "" = ""
+skipLiteral ('\"':xs) = tail $ dropWhile (/= '\"') xs
+skipLiteral str = str
+
 spacesAroundLists :: String -> String
 spacesAroundLists "" = ""
+spacesAroundLists ('\"':xs) = getLiteral ('\"':xs) ++ (spacesAroundLists $ skipLiteral ('\"':xs))
 spacesAroundLists ('(':xs) = " ( " ++ spacesAroundLists xs
 spacesAroundLists (')':xs) = " ) " ++ spacesAroundLists xs
 spacesAroundLists ('[':xs) = " [ " ++ spacesAroundLists xs
