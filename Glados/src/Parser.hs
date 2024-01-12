@@ -74,6 +74,7 @@ spacesAroundLists ('[':xs) = " [ " ++ spacesAroundLists xs
 spacesAroundLists (']':xs) = " ] " ++ spacesAroundLists xs
 spacesAroundLists ('{':xs) = " { " ++ spacesAroundLists xs
 spacesAroundLists ('}':xs) = " } " ++ spacesAroundLists xs
+spacesAroundLists (';':xs) = " ; " ++ spacesAroundLists xs
 spacesAroundLists (x:xs) = x : spacesAroundLists xs
 
 customWords :: Line -> String -> [Token]
@@ -101,6 +102,12 @@ isChar c = Parser $ \((Token x l):rest) ->
         then Just (l, rest)
         else Nothing
 
+parseChar :: Char -> Parser Char
+parseChar c = Parser $ \((Token x l):rest) ->
+    if x == [c]
+        then Just (c, rest)
+        else Nothing
+
 runParserSafe :: Parser a -> [Token] -> Maybe (a, [Token])
 runParserSafe p [] = Nothing
 runParserSafe p tokens = runParser p tokens
@@ -125,15 +132,17 @@ parseLiteral = Parser $ \((Token str l):rest) ->
 
 parseMany :: Parser a -> Parser [a]
 parseMany parser = Parser $ \tokens ->
-    case runParserSafe parser tokens of
-        Just (x, xs) -> case runParser (parseMany parser) xs of
-            Just (y, ys) -> Just (x:y, ys)
-            Nothing -> Just ([x], xs)
-        Nothing -> Just ([], tokens)
+    case runParserSafe (parseChar ';') tokens of
+        Just (_, rest) -> Just ([], rest)
+        Nothing -> case runParserSafe parser tokens of
+            Just (x, xs) -> case runParser (parseMany parser) xs of
+                Just (y, ys) -> Just (x:y, ys)
+                Nothing -> Just ([x], xs)
+            Nothing -> Just ([], tokens)
 
 parseSome :: Parser a -> Parser [a]
 parseSome parser = Parser $ \str ->
-    case runParser parser str of
+    case runParserSafe parser str of
         Just (x, xs) -> case runParser (parseMany parser) xs of
             Just (y, ys) -> Just ((x:y), ys)
             Nothing -> Just ([x], xs)
@@ -152,7 +161,7 @@ parseList open close = Parser $ \(tokens) ->
             Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): failed parse content")
         Nothing -> Nothing
 
-generalParser :: String -> [SExpr]
-generalParser code = case runParser (parseMany parseSExpr) (stringToTokens code) of
+generalParser :: String -> [[SExpr]]
+generalParser code = case runParser (parseSome (parseMany parseSExpr)) (stringToTokens code) of
     Just (x, []) -> x
     _ -> [] -- trace ("Error: Parsing failed")
