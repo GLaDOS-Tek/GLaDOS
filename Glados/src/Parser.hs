@@ -55,6 +55,28 @@ getFirstToken ('\n':xs) = getFirstToken xs
 getFirstToken ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ takeWhile (\c -> c /= ' ' && c /= '\n') (dropWhile (/= '\"') xs)
 getFirstToken str = takeWhile (\c -> c /= ' ' && c /= '\n') str
 
+getLiteral :: String -> String
+getLiteral "" = ""
+getLiteral ('\"':xs) = '\"' : (takeWhile (/= '\"') xs) ++ "\""
+getLiteral str = str
+
+skipLiteral :: String -> String
+skipLiteral "" = ""
+skipLiteral ('\"':xs) = tail $ dropWhile (/= '\"') xs
+skipLiteral str = str
+
+spacesAroundLists :: String -> String
+spacesAroundLists "" = ""
+spacesAroundLists ('\"':xs) = getLiteral ('\"':xs) ++ (spacesAroundLists $ skipLiteral ('\"':xs))
+spacesAroundLists ('(':xs) = " ( " ++ spacesAroundLists xs
+spacesAroundLists (')':xs) = " ) " ++ spacesAroundLists xs
+spacesAroundLists ('[':xs) = " [ " ++ spacesAroundLists xs
+spacesAroundLists (']':xs) = " ] " ++ spacesAroundLists xs
+spacesAroundLists ('{':xs) = " { " ++ spacesAroundLists xs
+spacesAroundLists ('}':xs) = " } " ++ spacesAroundLists xs
+spacesAroundLists (';':xs) = " ; " ++ spacesAroundLists xs
+spacesAroundLists (x:xs) = x : spacesAroundLists xs
+
 customWords :: Line -> String -> [Token]
 customWords _ "" = []
 customWords line (' ':xs) = customWords line xs
@@ -62,7 +84,7 @@ customWords line ('\n':xs) = customWords (line + 1) xs
 customWords line str = Token (getFirstToken str) line : customWords line (getRestOfString str)
 
 stringToTokens :: String -> [Token]
-stringToTokens str = customWords 1 (replaceChar '\t' ' ' str)
+stringToTokens str = customWords 1 (spacesAroundLists (replaceChar '\t' ' ' str))
 
 isSymbol :: Token -> Bool
 isSymbol (Token "" _) = False
@@ -73,11 +95,16 @@ isLiteral "" = False
 isLiteral "\"" = False
 isLiteral str = head str == '"' && last str == '"'
 
--- if success, return the line number of the token
 isChar :: Char -> Parser Int
 isChar c = Parser $ \((Token x l):rest) ->
     if x == [c]
         then Just (l, rest)
+        else Nothing
+
+parseChar :: Char -> Parser Char
+parseChar c = Parser $ \((Token x l):rest) ->
+    if x == [c]
+        then Just (c, rest)
         else Nothing
 
 runParserSafe :: Parser a -> [Token] -> Maybe (a, [Token])
@@ -112,17 +139,24 @@ parseMany parser = Parser $ \tokens ->
 
 parseSome :: Parser a -> Parser [a]
 parseSome parser = Parser $ \str ->
-    case runParser parser str of
+    case runParserSafe parser str of
         Just (x, xs) -> case runParser (parseMany parser) xs of
             Just (y, ys) -> Just ((x:y), ys)
             Nothing -> Just ([x], xs)
         Nothing -> Nothing
 
-parseLine :: Parser SExpr
-parseLine = undefined
+parseLine :: Parser SExpr -> Parser SExpr
+parseLine parser = Parser $ \tokens ->
+    case runParserSafe (parseChar ';') tokens of
+        Just (_, rest) -> Just (SList [], rest)
+        Nothing -> case runParserSafe parser tokens of
+            Just (x, xs) -> case runParser (parseLine parser) xs of
+                Just (SList y, ys) -> Just (SList (x:y), ys)
+                Nothing -> Just (SList [x], xs)
+            Nothing -> Just (SList [], tokens)
 
 parseSExpr :: Parser SExpr
-parseSExpr = parseLine <|> parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
+parseSExpr = parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
 
 parseList :: Char -> Char -> Parser SExpr
 parseList open close = Parser $ \(tokens) ->
@@ -130,11 +164,11 @@ parseList open close = Parser $ \(tokens) ->
         Just (l, rest) -> case runParser (parseMany parseSExpr) rest of
             Just (x, xs) -> case runParser (isChar close) xs of
                 Just (y, ys) -> Just (SList x, ys)
-                Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): no closing symbol")
-            Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): failed parse content")
+                Nothing -> Nothing
+            Nothing -> Nothing
         Nothing -> Nothing
 
 generalParser :: String -> [SExpr]
-generalParser code = case runParser (parseMany parseSExpr) (stringToTokens code) of
+generalParser code = case runParser (parseMany (parseLine parseSExpr)) (stringToTokens code) of
     Just (x, []) -> x
-    _ -> [] -- trace ("Error: Parsing failed")
+    _ -> []
