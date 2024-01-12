@@ -1,0 +1,66 @@
+cat division (a b) {
+  if (b == 0) {
+    vomit ("division by 0 forbidden" 84)
+  } else {
+    a / b
+  }
+}
+
+division (10 2)
+
+List [symbol cat, symbol division, List [symbol a, symbol b],
+    List [symbol if, List [symbol b, symbol ==, number 0],
+        List [symbol vomit, List [Literal "...", Number 84]],
+    symbol else,
+        List [symbol a, symbol /, symbol b]
+        ],
+
+symbol division, List [number 10, number 2]]
+
+(env, instructions)
+
+([("division", [
+    PushArg 0,
+    Push (Numerical 0),
+    Push (Operator Ne),
+    Call,
+    JumpIfFalse 6,
+    PushArg 1,
+    PushArg 0,
+    Push (Operator Div),
+    Call,
+    Ret,
+    Push (Literal "..."),
+    Push (Operator Print),
+    Call,
+    Ret
+])], [
+    Push (Numerical 2),
+    Push (Numerical, 10),
+    Push "division"
+    Call,
+    Ret
+    ]
+)
+
+
+[SSymbol "cat" 1,SSymbol "div" 1,SList [SSymbol "a" 1,SSymbol "b" 1],SList [SSymbol "if" 2,SList [SSymbol "b" 2,SSymbol "==" 2,SNumber 0 2],SNumber 0 3,SSymbol "else" 4,SSymbol "a" 5,SSymbol "/" 5,SSymbol "b" 5]]
+[SSymbol "cat" 1,SSymbol "div" 1,SList [SSymbol "a" 1,SSymbol "b" 1],SList [SSymbol "if" 2,SList [SSymbol "b" 2,SSymbol "==" 2,SNumber 0 2],SList [SNumber 0 3],SSymbol "else" 4,SList [SSymbol "a" 5,SSymbol "/" 5,SSymbol "b" 5]]]
+[SSymbol "feed" 1,SSymbol "a" 1,SNumber 10 1,SSymbol "cat" 3,SSymbol "div" 3,SList [SSymbol "a" 3,SSymbol "b" 3],SList [SSymbol "if" 4,SList [SSymbol "b" 4,SSymbol "==" 4,SNumber 0 4],SList [SNumber 0 5],SSymbol "else" 6,SList [SSymbol "a" 7,SSymbol "/" 7,SSymbol "b" 7]]]
+[SSymbol "cat" 1,SSymbol "factorial" 1,SList [SSymbol "n" 1],SList [SSymbol "if" 2,SList [SSymbol "n" 2,SSymbol "==" 2,SNumber 1 2],SList [SNumber 1 3],SSymbol "else" 4,SList [SSymbol "factorial" 5,SList [SSymbol "n" 5,SSymbol "-" 5,SNumber 1 5],SSymbol "*" 5,SSymbol "n" 5]]]
+[SNumber 10 1,SSymbol "*" 1,SList [SNumber 7 1,SSymbol "-" 1,SNumber 8 1,SSymbol "+" 1,SNumber 4 1,SSymbol "*" 1,SList [SNumber (-1) 1,SSymbol "+" 1,SNumber 5 1]]]
+[SSymbol "cat" 1,SSymbol "factorial" 1,SList [SSymbol "n" 1],SList [SSymbol "if" 2,SList [SSymbol "n" 2,SSymbol "==" 2,SNumber 1 2],SList [SNumber 1 3],SSymbol "else" 4,SList [SList [SSymbol "factorial" 5,SList [SSymbol "n" 5,SSymbol "-" 5,SNumber 1 5],SSymbol "*" 5,SSymbol "n" 5]]]]
+[SSymbol "cat" 1,SSymbol "factorial" 1,SList [SSymbol "n" 1],SList [SSymbol "if" 2,SList [SSymbol "n" 2,SSymbol "==" 2,SNumber 1 2],SList [SNumber 1 3],SSymbol "else" 4,SList [SSymbol "factorial" 5,SList [SSymbol "n" 5,SSymbol "-" 5,SNumber 1 5],SSymbol "*" 5,SSymbol "n" 5]]]
+[SNumber 10 1,SSymbol "*" 1,SList [SNumber 7 1,SSymbol "-" 1,SNumber 8 1,SSymbol "+" 1,SNumber 4 1,SSymbol "*" 1,SList [SNumber (-1) 1,SSymbol "+" 1,SNumber 5 1]]]
+[SNumber 10 1,SSymbol "*" 1,SList [SNumber 7 1,SSymbol "-" 1,SNumber 8 1]]
+[SNumber 10 1,SSymbol "*" 1,SList [SNumber 7 1,SSymbol "-" 1,SNumber 8 1],SSymbol "+" 1,SNumber 50 1]
+
+
+[SSymbol "cat" 1,SSymbol "div" 1,SList [SSymbol "a" 1,SSymbol "b" 1],SList [SSymbol "if" 1,SList [SSymbol "b" 1,SSymbol "==" 1,SNumber 0 1],SList [SNumber 0 1],SSymbol "else" 1,SList [SSymbol "a" 1,SSymbol "/" 1,SSymbol "b" 1]]]
+
+
+[SSymbol "feed" 1,SSymbol "a" 1,SNumber 10 1,SSymbol "cat" 3,SSymbol "div" 3,SList [SSymbol "a" 3,SSymbol "b" 3],SList [SSymbol "if" 4,SList [SSymbol "b" 4,SSymbol "==" 4,SNumber 0 4],SList [SNumber 0 5],SSymbol "else" 6,SList [SSymbol "a" 7,SSymbol "/" 7,SSymbol "b" 7]]]
+Func "factorial" [List [Symbol "n"]] [Cond (Call "==" [Symbol "n",Number 1]) (List [Number 1]) (List [Symbol "factorial",Call "-" [Symbol "n",Number 1],Symbol "*",Symbol "n"])]
+
+
+[[SSymbol "feed" 1,SSymbol "a" 1,SNumber 10 1],[SSymbol "cat" 1,SSymbol "div" 1,List [SSymbol "a" 1,SSymbol "b" 1],List [SSymbol "if" 1,List [SSymbol "b" 1,SSymbol "==" 1,SNumber 0 1],List [SNumber 0 1],SSymbol "else" 1,List [SSymbol "a" 1,SSymbol "/" 1,SSymbol "b" 1]]]]

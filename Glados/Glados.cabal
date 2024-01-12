@@ -26,10 +26,11 @@ source-repository head
 library
   exposed-modules:
       Error
-      Eval
+      Compiler
       Parser
       Structs
       Tools
+      Ast
   other-modules:
       Paths_Glados
   autogen-modules:

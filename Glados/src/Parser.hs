@@ -1,4 +1,4 @@
-module Parser (SExpr(..)) where
+module Parser (generalParser) where
 
 -- IMPORTS
 
@@ -87,19 +87,19 @@ runParserSafe p tokens = runParser p tokens
 parseNumber :: Parser SExpr
 parseNumber = Parser $ \((Token str l):rest) ->
     case (readMaybe (str) :: Maybe Int) of
-        Just nbr -> Just (Number nbr l, rest)
+        Just nbr -> Just (SNumber nbr l, rest)
         Nothing -> Nothing
 
 parseSymbol :: Parser SExpr
 parseSymbol = Parser $ \((Token str l):rest) ->
     if isSymbol (Token str l)
-        then Just (Symbol str l, rest)
+        then Just (SSymbol str l, rest)
         else Nothing
 
 parseLiteral :: Parser SExpr
 parseLiteral = Parser $ \((Token str l):rest) ->
     if isLiteral str
-        then Just (Literal (tail $ init str) l, rest)
+        then Just (SLiteral (tail $ init str) l, rest)
         else Nothing
 
 parseMany :: Parser a -> Parser [a]
@@ -118,15 +118,18 @@ parseSome parser = Parser $ \str ->
             Nothing -> Just ([x], xs)
         Nothing -> Nothing
 
+parseLine :: Parser SExpr
+parseLine = undefined
+
 parseSExpr :: Parser SExpr
-parseSExpr = parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
+parseSExpr = parseLine <|> parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
 
 parseList :: Char -> Char -> Parser SExpr
 parseList open close = Parser $ \(tokens) ->
     case runParser (isChar open) tokens of
         Just (l, rest) -> case runParser (parseMany parseSExpr) rest of
             Just (x, xs) -> case runParser (isChar close) xs of
-                Just (y, ys) -> Just (List x, ys)
+                Just (y, ys) -> Just (SList x, ys)
                 Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): no closing symbol")
             Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): failed parse content")
         Nothing -> Nothing
