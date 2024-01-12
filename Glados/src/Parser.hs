@@ -95,7 +95,6 @@ isLiteral "" = False
 isLiteral "\"" = False
 isLiteral str = head str == '"' && last str == '"'
 
--- if success, return the line number of the token
 isChar :: Char -> Parser Int
 isChar c = Parser $ \((Token x l):rest) ->
     if x == [c]
@@ -132,13 +131,11 @@ parseLiteral = Parser $ \((Token str l):rest) ->
 
 parseMany :: Parser a -> Parser [a]
 parseMany parser = Parser $ \tokens ->
-    case runParserSafe (parseChar ';') tokens of
-        Just (_, rest) -> Just ([], rest)
-        Nothing -> case runParserSafe parser tokens of
-            Just (x, xs) -> case runParser (parseMany parser) xs of
-                Just (y, ys) -> Just (x:y, ys)
-                Nothing -> Just ([x], xs)
-            Nothing -> Just ([], tokens)
+    case runParserSafe parser tokens of
+        Just (x, xs) -> case runParser (parseMany parser) xs of
+            Just (y, ys) -> Just (x:y, ys)
+            Nothing -> Just ([x], xs)
+        Nothing -> Just ([], tokens)
 
 parseSome :: Parser a -> Parser [a]
 parseSome parser = Parser $ \str ->
@@ -147,6 +144,16 @@ parseSome parser = Parser $ \str ->
             Just (y, ys) -> Just ((x:y), ys)
             Nothing -> Just ([x], xs)
         Nothing -> Nothing
+
+parseLine :: Parser SExpr -> Parser SExpr
+parseLine parser = Parser $ \tokens ->
+    case runParserSafe (parseChar ';') tokens of
+        Just (_, rest) -> Just (List [], rest)
+        Nothing -> case runParserSafe parser tokens of
+            Just (x, xs) -> case runParser (parseLine parser) xs of
+                Just (List y, ys) -> Just (List (x:y), ys)
+                Nothing -> Just (List [x], xs)
+            Nothing -> Just (List [], tokens)
 
 parseSExpr :: Parser SExpr
 parseSExpr = parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
@@ -157,11 +164,11 @@ parseList open close = Parser $ \(tokens) ->
         Just (l, rest) -> case runParser (parseMany parseSExpr) rest of
             Just (x, xs) -> case runParser (isChar close) xs of
                 Just (y, ys) -> Just (List x, ys)
-                Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): no closing symbol")
-            Nothing -> Nothing -- trace ("Error (line " ++ show l ++ "): failed parse content")
+                Nothing -> Nothing
+            Nothing -> Nothing
         Nothing -> Nothing
 
-generalParser :: String -> [[SExpr]]
-generalParser code = case runParser (parseSome (parseMany parseSExpr)) (stringToTokens code) of
+generalParser :: String -> [SExpr]
+generalParser code = case runParser (parseMany (parseLine parseSExpr)) (stringToTokens code) of
     Just (x, []) -> x
-    _ -> [] -- trace ("Error: Parsing failed")
+    _ -> []
