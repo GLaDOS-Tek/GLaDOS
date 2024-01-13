@@ -113,7 +113,7 @@ runParserSafe p tokens = runParser p tokens
 
 parseNumber :: Parser SExpr
 parseNumber = Parser $ \((Token str l):rest) ->
-    case (readMaybe (str) :: Maybe Int) of
+    case (readMaybe str :: Maybe Int) of
         Just nbr -> Just (SNumber nbr l, rest)
         Nothing -> Nothing
 
@@ -159,7 +159,7 @@ parseSExpr :: Parser SExpr
 parseSExpr = parseNumber <|> parseSymbol <|> parseLiteral <|> parseList '(' ')' <|> parseList '[' ']' <|> parseList '{' '}'
 
 parseList :: Char -> Char -> Parser SExpr
-parseList open close = Parser $ \(tokens) ->
+parseList open close = Parser $ \tokens ->
     case runParser (isChar open) tokens of
         Just (l, rest) -> case runParser (parseMany parseSExpr) rest of
             Just (x, xs) -> case runParser (isChar close) xs of

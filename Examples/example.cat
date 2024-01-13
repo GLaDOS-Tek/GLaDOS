@@ -8,4 +8,4 @@ cat div ( a b ) {
     }
 };
 
-div 10 2;
+div (10 2);
