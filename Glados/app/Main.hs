@@ -1,12 +1,12 @@
-module Main (main) where
+module Main (
+    main
+) where
 
 -- IMPORTS
 
-import Parser (generalParser)
-import Ast (sexprToAST)
-import Compiler (evalAst, Env)
-import Tools (extractFromFile)
-import Error (sendError, errorParams)
+import Ast
+import Tools
+import Error
 import System.Environment (getArgs)
 
 -- FUNCTIONS
@@ -19,5 +19,5 @@ main = getArgs >>= \args ->
     case args of
         [filepath] ->
             extractFromFile filepath >>= \content ->
-                print $ show $ generalParser content
+                putStrLn $ show $ sourceToAst content
         _ -> errorParams

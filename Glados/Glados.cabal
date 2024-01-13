@@ -25,12 +25,12 @@ source-repository head
 
 library
   exposed-modules:
+      Ast
+      Bytecode
       Error
-      Compiler
       Parser
       Structs
       Tools
-      Ast
   other-modules:
       Paths_Glados
   autogen-modules:
@@ -40,6 +40,8 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , binary
+    , bytestring
   default-language: Haskell2010
 
 executable glados
@@ -54,6 +56,8 @@ executable glados
   build-depends:
       Glados
     , base >=4.7 && <5
+    , binary
+    , bytestring
   default-language: Haskell2010
 
 test-suite Glados-test
@@ -61,8 +65,8 @@ test-suite Glados-test
   main-is: Spec.hs
   other-modules:
       AstTests
-      ParserTests
       EvalTests
+      ParserTests
       Paths_Glados
   autogen-modules:
       Paths_Glados
@@ -72,5 +76,7 @@ test-suite Glados-test
   build-depends:
       Glados
     , base >=4.7 && <5
+    , binary
+    , bytestring
     , hspec
   default-language: Haskell2010

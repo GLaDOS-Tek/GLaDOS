@@ -5,37 +5,81 @@
 -- Ast
 -}
 
-module Ast (sexprToAST) where
+module Ast (
+    sourceToAst
+) where
 
+import Control.Applicative
+import Parser
 import Structs
 
-type Env = [(String, AstValue)]
+operators :: [(String, AstValue)]
+operators = [("+", Operator "+"),
+              ("-", Operator "-"),
+              ("*", Operator "*"),
+              ("/", Operator "/")]
+            --   ("=", binaryOp unwrapNumber (==)),
+            --   ("/=", binaryOp unwrapNumber (/=)),
+            --   ("<", binaryOp unwrapNumber (<)),
+            --   (">", binaryOp unwrapNumber (>)),
+            --   (">=", binaryOp unwrapNumber (>=)),
+            --   ("<=", binaryOp unwrapNumber (<=)),
+            --   ("=", binaryOp unwrapBool (==)),
+            --   ("/=", binaryOp unwrapBool (/=))]
 
-astDefine :: [SExpr] -> AstValue
-astDefine (SSymbol sym line : val : rest) = case val of
-           SLiteral v _ -> Define sym (Symbol v)
-           SNumber v _ -> Define sym (Number v)
-           SList l-> Define sym (sexprToAST (SList l))
-astDefine _ = Error "too many arguments in define statement" (-1)
+parseNumberAst :: Parser AstValue
+parseNumberAst = Number <$> (parseWS *> parseInt <* parseWS)
 
-astFunction :: [SExpr] -> AstValue
-astFunction [SSymbol name _, SList args, SList body] = Func name (sexprToAST $ SList args) [sexprToAST (SList body)]
-astFunction _ = Error "Syntax error: Function definition." (-1)
+parseSymbolAst :: Parser AstValue
+parseSymbolAst = Symbol <$> (parseWS *> parseSymbol <* parseWS)
 
-astCondition :: [SExpr] -> AstValue
-astCondition [cond, true, SSymbol "else" _, false] = Cond (sexprToAST cond) (sexprToAST true) (sexprToAST false)
-astCondition _ = Error "Syntax Error: Conditional branching" (-1)
+parseBooleanAst :: Parser AstValue
+parseBooleanAst = Boolean <$> (parseWS *> parseBoolean <* parseWS)
 
-astCall :: String -> [SExpr] -> AstValue
-astCall func args = Call func (map sexprToAST args)
+parseOperatorAst :: Parser AstValue
+parseOperatorAst = Operator <$> (parseWS *> parseWord "+" <|> parseWord "-" <|> parseWord "*" <|> parseWord "/" <* parseWS)
+parseLiteralAst :: Parser AstValue
+parseLiteralAst = Literal <$> (parseWS *> parseString <* parseWS)
 
-sexprToAST :: SExpr -> AstValue
-sexprToAST (SNumber i _) = Number i
-sexprToAST (SLiteral str _) = Literal str
-sexprToAST (SSymbol s _) = Symbol s
-sexprToAST (SList (SSymbol "feed" _ : xs)) = astDefine xs
-sexprToAST (SList ((SSymbol "cat" _) : xs)) = astFunction xs
-sexprToAST (SList (SSymbol "if" _ : xs)) = astCondition xs
-sexprToAST (SList [lhs, SSymbol "+" _, rhs]) = Operator "+" (sexprToAST lhs) (sexprToAST rhs)
-sexprToAST (SList [SSymbol funcName _, SList args]) = astCall funcName args
-sexprToAST (SList l) = List (map sexprToAST l)
+parseDefineAst :: Parser AstValue
+parseDefineAst = do
+    name <- parseWS *> parseWord "feed" *> parseSymbolAst
+    value <- parseWS *> parseAst
+    return (Define name value)
+
+parseFunctionAst :: Parser AstValue
+parseFunctionAst = do
+    name <- parseWS *> parseWord "cat" *> parseSymbolAst
+    args <- parseWS *> parseArgListAst
+    body <- parseWS *> parseBodyAst
+    return (Func name args body)
+
+parseConditionAst :: Parser AstValue
+parseConditionAst = do
+    cond <- parseWS *> parseWord "if" *> parseArgListAst
+    true <- parseWS *> parseBodyAst
+    false <- parseWS *> parseWord "else" *> parseBodyAst
+    return (Cond cond true false)
+
+parseArgListAst :: Parser AstValue
+parseArgListAst = ArgList <$> (parseWS *> parseChar '(' *> parseMany parseAst <* parseChar ')' <* parseWS)
+
+parseBodyAst :: Parser AstValue
+parseBodyAst = Body <$> (parseWS *> parseChar '{' *> parseMany parseAst <* parseChar '}' <* parseWS)
+
+parseAst :: Parser AstValue
+parseAst = parseBodyAst
+       <|> parseArgListAst
+       <|> parseOperatorAst
+       <|> parseDefineAst
+       <|> parseConditionAst
+       <|> parseFunctionAst
+       <|> parseNumberAst
+       <|> parseLiteralAst
+       <|> parseBooleanAst
+       <|> parseSymbolAst
+
+sourceToAst :: String -> Maybe [AstValue]
+sourceToAst input = case runParser (parseMany parseAst) input of
+  Just (out, _) -> Just out
+  _ -> Nothing

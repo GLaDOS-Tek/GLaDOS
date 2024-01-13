@@ -1,11 +1,9 @@
-feed a 10;
+feed val 10
 
-cat div ( a b ) {
-    if ( b == 0 ) {
+cat div (a b) {
+    if (b) {
         0
     } else {
         a / b
     }
-};
-
-div (10 2);
+}
