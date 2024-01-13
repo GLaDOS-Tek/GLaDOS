@@ -27,8 +27,8 @@ data AstValue =
     | Body [AstValue]
     | Define AstValue AstValue
     | Cond AstValue AstValue AstValue
-    | Call String [AstValue]
+    | Call AstValue AstValue
     | Func AstValue AstValue AstValue
-    | Operator String
+    | Operator BinOp
     | Error String Int
     deriving (Show, Eq)

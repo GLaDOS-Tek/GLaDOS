@@ -1,9 +1,12 @@
 feed val 10
 
 cat div (a b) {
-    if (b) {
+    if (b == 0) {
         0
     } else {
         a / b
     }
 }
+
+div (10 2)
+fact(5)

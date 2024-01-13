@@ -38,6 +38,6 @@ symbol division, List [number 10, number 2]]
 )
 
 [SList [SSymbol "cat" 1,SSymbol "factorial" 1,SList [SSymbol "n" 1],SList [SSymbol "if" 2,SList [SSymbol "n" 2,SSymbol "==" 2,SNumber 1 2],SList [SNumber 1 3],SSymbol "else" 4,SList [SSymbol "factorial" 5,SList [SSymbol "n" 5,SSymbol "-" 5,SNumber 1 5],SSymbol "*" 5,SSymbol "n" 5]]]]
+[SList [SSymbol "cat" 1,SSymbol "factorial" 1,SList [SSymbol "n" 1],SList [SSymbol "if" 2,SList [SSymbol "n" 2,SSymbol "==" 2,SNumber 1 2],SList [SNumber 1 3],SSymbol "else" 4,SList [SSymbol "factorial" 5,SList [SSymbol "n" 5,SSymbol "-" 5,SNumber 1 5],SSymbol "*" 5,SSymbol "n" 5]]],SList [SSymbol "factorial" 9,SList [SNumber 5 9]]]
 
-
-function is_prime(x) { if (typeOf(x) != \"integer\" or x <= 1) { return False; } end = int(sqrt(x)) + 1; for (n = 2; n < end; n = n + 1) { if (x % n == 0) { return False; } } return True; }
+function is_prime(x) { if (typeOf(x) != "integer" or x <= 1) { return False; } end = int(sqrt(x)) + 1; for (n = 2; n < end; n = n + 1) { if (x % n == 0) { return False; } } return True; }

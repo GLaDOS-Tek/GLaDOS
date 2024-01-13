@@ -14,11 +14,11 @@ import Parser
 import Structs
 
 operators :: [(String, AstValue)]
-operators = [("+", Operator "+"),
-              ("-", Operator "-"),
-              ("*", Operator "*"),
-              ("/", Operator "/")]
-            --   ("=", binaryOp unwrapNumber (==)),
+operators = [("+", Operator Add),
+              ("-", Operator Sub),
+              ("*", Operator Mul),
+              ("/", Operator Div),
+              ("==", Operator Equal)]
             --   ("/=", binaryOp unwrapNumber (/=)),
             --   ("<", binaryOp unwrapNumber (<)),
             --   (">", binaryOp unwrapNumber (>)),
@@ -37,7 +37,13 @@ parseBooleanAst :: Parser AstValue
 parseBooleanAst = Boolean <$> (parseWS *> parseBoolean <* parseWS)
 
 parseOperatorAst :: Parser AstValue
-parseOperatorAst = Operator <$> (parseWS *> parseWord "+" <|> parseWord "-" <|> parseWord "*" <|> parseWord "/" <* parseWS)
+parseOperatorAst = Operator <$> (parseWS *> parseOp <* parseWS)
+    where parseOp = Add <$ parseWord "+"
+                <|> Sub <$ parseWord "-"
+                <|> Mul <$ parseWord "*"
+                <|> Div <$ parseWord "/"
+                <|> Equal <$ parseWord "=="
+
 parseLiteralAst :: Parser AstValue
 parseLiteralAst = Literal <$> (parseWS *> parseString <* parseWS)
 
@@ -61,6 +67,12 @@ parseConditionAst = do
     false <- parseWS *> parseWord "else" *> parseBodyAst
     return (Cond cond true false)
 
+parseCallAst :: Parser AstValue
+parseCallAst = do
+    name <- parseWS *> parseSymbolAst
+    args <- parseWS *> parseArgListAst
+    return (Call name args)
+
 parseArgListAst :: Parser AstValue
 parseArgListAst = ArgList <$> (parseWS *> parseChar '(' *> parseMany parseAst <* parseChar ')' <* parseWS)
 
@@ -70,11 +82,12 @@ parseBodyAst = Body <$> (parseWS *> parseChar '{' *> parseMany parseAst <* parse
 parseAst :: Parser AstValue
 parseAst = parseBodyAst
        <|> parseArgListAst
-       <|> parseOperatorAst
        <|> parseDefineAst
        <|> parseConditionAst
        <|> parseFunctionAst
        <|> parseNumberAst
+       <|> parseOperatorAst
+       <|> parseCallAst
        <|> parseLiteralAst
        <|> parseBooleanAst
        <|> parseSymbolAst
