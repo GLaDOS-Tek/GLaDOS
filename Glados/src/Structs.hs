@@ -1,31 +1,87 @@
-module Structs (SExpr(..), Ast(..)) where
+{-# LANGUAGE DeriveGeneric #-}
 
-data SExpr = IntExpr Int Int -- second int is the line
-    | StrExpr String Int
-    | SymbolExpr String Int
-    | ExprList [SExpr]
-    deriving (Show, Read, Eq)
+module Structs (
+  Env,
+  Stack,
+  Insts,
+  Args,
+  EnvVM,
+  FuncInsts,
+  ListArgs,
+  Operator(..),
+  AstValue(..),
+  Value(..),
+  Instruction(..)
+) where
 
-data Ast = Define String Ast
-    | Cond Ast Ast Ast
-    | Defun String [Ast] [Ast]
-    | Number Int
-    | Str String
-    | Symbol String
+import GHC.Generics
+import Data.Binary
+
+
+type Env = [(String, AstValue)]
+
+type Stack = [Value]
+
+type Insts = [Instruction]
+
+type Args = [Value]
+
+type EnvVM = [(String, Value)]
+
+type FuncInsts = [Insts]
+
+type ListArgs = [Args]
+
+data Operator =
+      Add
+    | Sub
+    | Mul
+    | Div
+    | Eq
+    | Ne
+    | Gt
+    | Lt
+    | Le
+    | Ge
+    | And
+    | Or
+    | Not
+    deriving (Show, Eq, Generic)
+
+data AstValue =
+      AstNumber Int
+    | AstLiteral String
+    | AstBoolean Bool
+    | AstSymbol String
+    | AstList [AstValue]
+    | AstArgList [AstValue]
+    | AstBody [AstValue]
+    | AstDefine AstValue AstValue
+    | AstCond AstValue AstValue AstValue
+    | AstCall AstValue AstValue
+    | AstFunc AstValue AstValue AstValue
+    | AstBinaryOp Operator AstValue AstValue
+    | AstError String Int
+    deriving (Show, Eq)
+
+data Value =
+      Numerical Int
     | Boolean Bool
-    | Call String [Ast]
-    | AstList [Ast]
-    | Error String Int
-    deriving (Read, Eq)
+    | Operator Operator
+    | Insts [Instruction]
+    | Function Insts
+    deriving (Show, Eq, Generic)
 
-instance Show Ast where
-    show (Define str ast) = "Define " ++ str ++ " = " ++ show ast
-    show (Number i) = show i
-    show (Str s) = s
-    show (Symbol s) = s
-    show (Boolean b) = show b
-    show (Call str asts) = "Call " ++ str ++ " (" ++ show asts ++ ")"
-    show (AstList asts) = "AstList " ++ show asts
-    show (Error errMsg line) = "Error (line " ++ show line ++ "): " ++ errMsg
-    show (Cond cond trueBranch falseBranch) = "If (" ++ show cond ++ ") then (" ++ show trueBranch ++ ") else (" ++ show falseBranch ++ ")"
-    show (Defun funcName args body) = "Defun " ++ funcName ++ " " ++ show args ++ " " ++ show body
+data Instruction =
+      Push Value
+    | Pop
+    | Call
+    | Ret
+    | JumpIfFalse Int
+    | PushArg Int
+    | PushEnv String
+    deriving (Show, Eq, Generic)
+
+instance Binary Value
+instance Binary Operator
+instance Binary Instruction

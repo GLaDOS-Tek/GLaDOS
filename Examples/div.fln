@@ -1,0 +1,5 @@
+cat div (a b) {
+    a / b
+}
+
+div (10 2)

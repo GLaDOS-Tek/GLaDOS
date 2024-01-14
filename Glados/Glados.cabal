@@ -25,34 +25,42 @@ source-repository head
 
 library
   exposed-modules:
+      Ast
+      Bytecode
+      Compiler
       Error
-      Eval
       Parser
       Structs
       Tools
-  other-modules:
-      Paths_Glados
-  autogen-modules:
-      Paths_Glados
+      VM
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , binary
+    , bytestring
   default-language: Haskell2010
 
-executable glados
-  main-is: Main.hs
-  other-modules:
-      Paths_Glados
-  autogen-modules:
-      Paths_Glados
+executable glados-compiler
+  main-is: MainCompiler.hs
   hs-source-dirs:
       app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       Glados
     , base >=4.7 && <5
+    , binary
+    , bytestring
+  default-language: Haskell2010
+
+executable glados-vm
+  main-is: MainVM.hs
+  hs-source-dirs:
+      app
+  build-depends:
+      Glados
+    , base >=4.7 && <5
+    , binary
+    , bytestring
   default-language: Haskell2010
 
 test-suite Glados-test
@@ -61,15 +69,13 @@ test-suite Glados-test
   other-modules:
       AstTests
       ParserTests
-      EvalTests
-      Paths_Glados
-  autogen-modules:
-      Paths_Glados
+      VmTests
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       Glados
     , base >=4.7 && <5
+    , binary
+    , bytestring
     , hspec
   default-language: Haskell2010

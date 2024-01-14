@@ -1,4 +1,6 @@
 Glados/.stack-work/
 Glados/stack.yaml.lock
 Glados/*~
-glados
+glados-*
+.vscode
+*.flno
