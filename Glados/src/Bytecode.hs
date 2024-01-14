@@ -36,6 +36,8 @@ data Operators =
 
 type Insts = [Instruction]
 
+type SaveData = (Env, Insts)
+
 data Instruction =
       Push Value
     | Pop
@@ -52,18 +54,18 @@ instance Binary Instruction
 
 type Env = [(String, Value)]
 
-encodeToBinary :: Env -> ByteString
+encodeToBinary :: SaveData -> ByteString
 encodeToBinary = encode
 
-binaryToDecode :: ByteString -> Env
+binaryToDecode :: ByteString -> SaveData
 binaryToDecode = decode
 
-writeBinaryToFile :: FilePath -> Env -> IO ()
+writeBinaryToFile :: FilePath -> SaveData -> IO ()
 writeBinaryToFile filename dataToWrite = do
     let encodedData = encodeToBinary dataToWrite
     B.writeFile filename encodedData
 
-readBinaryFromFile :: FilePath -> IO Env
+readBinaryFromFile :: FilePath -> IO SaveData
 readBinaryFromFile filename = do
     encodedData <- B.readFile filename
     return (binaryToDecode encodedData)

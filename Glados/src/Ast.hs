@@ -13,20 +13,6 @@ import Control.Applicative
 import Parser
 import Structs
 
-operators :: [(String, AstValue)]
-operators = [("+", Operator Add),
-              ("-", Operator Sub),
-              ("*", Operator Mul),
-              ("/", Operator Div),
-              ("==", Operator Equal)]
-            --   ("/=", binaryOp unwrapNumber (/=)),
-            --   ("<", binaryOp unwrapNumber (<)),
-            --   (">", binaryOp unwrapNumber (>)),
-            --   (">=", binaryOp unwrapNumber (>=)),
-            --   ("<=", binaryOp unwrapNumber (<=)),
-            --   ("=", binaryOp unwrapBool (==)),
-            --   ("/=", binaryOp unwrapBool (/=))]
-
 parseNumberAst :: Parser AstValue
 parseNumberAst = Number <$> (parseWS *> parseInt <* parseWS)
 
@@ -43,6 +29,7 @@ parseOperatorAst = Operator <$> (parseWS *> parseOp <* parseWS)
                 <|> Mul <$ parseWord "*"
                 <|> Div <$ parseWord "/"
                 <|> Equal <$ parseWord "=="
+                <|> NEqual <$ parseWord "!="
 
 parseLiteralAst :: Parser AstValue
 parseLiteralAst = Literal <$> (parseWS *> parseString <* parseWS)

@@ -95,7 +95,7 @@ parseSpan f = Parser $ \input -> Just (span f input)
 
 parseUInt :: Parser Int
 parseUInt = Parser $ \input ->
-    case span isDigit input of
+    case span isAlphaNum input of
         ([], _) -> Nothing
         (out, rest) -> case readMaybe out :: Maybe Int of
             Just num -> Just (num, rest)
