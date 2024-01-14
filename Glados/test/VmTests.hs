@@ -40,28 +40,32 @@ vmTests = hspec $ do
             let instructions = [Push (Numerical 5), Push (Function factFunction), Call, Ret]
             let result = exec [] instructions [] [] [] []
             result `shouldBe` Right (Numerical 120)
-        -- it "executes a function call from environment" $ do
-        --     let sumFunction =
-        --             [Push (Numerical 0),
-        --              PushArg 0,
-        --              Push (Operator Eq),
-        --              JumpIfFalse 2,
-        --              Ret,
-        --              PushArg 0,
-        --              Push (Operator Add),
-        --              Call,
-        --              Ret]
+        it "executes a function call from environment" $ do
+            let func2 =
+                    [PushArg 0,
+                    Push (Numerical 5),
+                    Push (Operator Add),
+                    Call,
+                    Ret]
 
-        --     let env = [("sum", Function sumFunction)]
+            let func =
+                    [PushArg 0,
+                    PushArg 1,
+                    Push (Operator Add),
+                    Call,
+                    PushEnv "fun2",
+                    Call,
+                    Ret]
 
-<<<<<<< HEAD
-        --     let instructions = [Push (Numerical 5), PushEnv "sum", Call, Ret]
-        --     let result = exec [] instructions [] env [] []
-        --     result `shouldBe` Right (Numerical 15)
-
-        
-=======
-            let instructions = [Push (Numerical 5), PushEnv "sum", Call, Ret]
+            let env = [("fun", Function func), ("fun2", Function func2)]
+            let instructions =
+                    [Push (Numerical 5),
+                     Push (Numerical 2),
+                     PushEnv "fun",
+                     Call,
+                     Push (Numerical 1),
+                     Push (Operator Add),
+                     Call,
+                     Ret]
             let result = exec [] instructions [] env [] []
-            result `shouldBe` Right (Numerical 15)
->>>>>>> 41a6a5c8dcac1246bdd679223541653239ee09db
+            result `shouldBe` Right (Numerical 13)
