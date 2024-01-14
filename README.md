@@ -2,6 +2,23 @@
 
 Welcome to the GLaDOS Project repository!
 
+```
+\`*-.
+ )  _`-.
+.  : `. .
+: _   '  \
+; o` _.   `*-._
+`-.-'          `-.
+  ;       `       `.
+  :.       .        \
+  . \  .   :   .-'   .
+  '  `+.;  ;  '      :
+  :  '  |    ;       ;-.
+  ; '   : :`-:     _.`* ;
+ /  .*' ; .*`- +'  `*'
+*-*   `*-*  `*-*'
+```
+
 ## The projet
 
 This project is a compiler for a fictional language we invented, the Felyn.  
