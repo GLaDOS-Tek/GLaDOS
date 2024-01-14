@@ -1,0 +1,129 @@
+(*
+Language : Felyn
+Description : A simple functionnal language with syntax inspired from C
+Author : [Stanislas Commenge, Sacha Topaloff, Adam Bentaleb, Arthur Bourdin, Antoine Girard]
+Extension : .fln
+*)
+
+<digit> ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
+
+<letter> ::> “a” | “b” | … | “z” | “A” | “B” | … | “Z”
+
+<integer> ::= <digit>|<integer><digit>
+
+<floating-point> ::= <integer>.<integer>
+
+<string> ::= “any string”
+
+<number> ::= <digit>+
+
+<comparison-operator> ::= “==” | “!=” | “<” | “>” | “<=” | “>=”
+
+<operation> ::= “+” | “-” | “*” | “/”
+
+<logical-operator> ::= “&&” | “||”
+
+<character> ::= <any character except “\””>
+
+<characters> ::= <character> | <character> <characters>
+
+<condition> ::= <expression> <comparison-operator> <expression>
+
+<identifier> ::= <letter> <identifier-tail>
+
+<identifier-tail> ::= <letter> | <digit>
+
+<statement> ::= 	“if” “(“ <condition> “)” “{“ <function-body> “}” 
+			“else” “{“ <function-body> “}” | <expression>
+
+<function-body> ::= <statement> | <statement> <function-body>
+
+<parameters> ::= <identifier> | <identifier> “ ” <parameters>
+
+<function-call> ::= <identifier> “()” | <identifier> “(“ <parameters> “)”
+
+<list> ::= “[“ <list-elements> “]”
+
+<list-elements> ::= <expression> | <expression> “ “ <list-elements>
+
+<expression> ::= <print-expression> | <exit-expression> | <variable-definition-expression> | <arithmetic-expression> | <function-call>
+
+<print-expression> ::= “meow” <characters>
+
+<exit-expression> ::= “vomit” “(“ <vomit-arguments> “)”
+
+<vomit-arguments> ::= <string> <number>
+
+<variable-definition-expression> ::= “feed” <identifier> “=” <expression>
+
+<arithmetic-expression> ::= <expression> <operation> <expression>
+
+<new-function> ::= <function-definition> “;”
+
+<function-definition> ::= “cat” <identifier> “(“ <parameters> “)” “{“ <function-body> “}”
+
+
+
+(*
+Language : Felyn
+Description : A simple functionnal language with syntax inspired from C
+Author : [Stanislas Commenge, Sacha Topaloff, Adam Bentaleb, Arthur Bourdin, Antoine Girard]
+Extension : .fln
+*)
+
+<digit> ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
+
+<letter> ::> “a” | “b” | … | “z” | “A” | “B” | … | “Z”
+
+<integer> ::= <digit>|<integer><digit>
+
+<floating-point> ::= <integer>.<integer>
+
+<string> ::= “any string”
+
+<number> ::= <digit>+
+
+<comparison-operator> ::= “==” | “!=” | “<” | “>” | “<=” | “>=”
+
+<operation> ::= “+” | “-” | “*” | “/”
+
+<logical-operator> ::= “&&” | “||”
+
+<character> ::= <any character except “\””>
+
+<characters> ::= <character> | <character> <characters>
+
+<condition> ::= <expression> <comparison-operator> <expression>
+
+<identifier> ::= <letter> <identifier-tail>
+
+<identifier-tail> ::= <letter> | <digit>
+
+<statement> ::= 	“if” “(“ <condition> “)” “{“ <function-body> “}” 
+			“else” “{“ <function-body> “}” | <expression>
+
+<function-body> ::= <statement> | <statement> <function-body>
+
+<parameters> ::= <identifier> | <identifier> “ ” <parameters>
+
+<function-call> ::= <identifier> “()” | <identifier> “(“ <parameters> “)”
+
+<list> ::= “[“ <list-elements> “]”
+
+<list-elements> ::= <expression> | <expression> “ “ <list-elements>
+
+<expression> ::= <print-expression> | <exit-expression> | <variable-definition-expression> | <arithmetic-expression> | <function-call>
+
+<print-expression> ::= “meow” <characters>
+
+<exit-expression> ::= “vomit” “(“ <vomit-arguments> “)”
+
+<vomit-arguments> ::= <string> <number>
+
+<variable-definition-expression> ::= “feed” <identifier> “=” <expression>
+
+<arithmetic-expression> ::= <expression> <operation> <expression>
+
+<new-function> ::= <function-definition> “;”
+
+<function-definition> ::= “cat” <identifier> “(“ <parameters> “)” “{“ <function-body> “}”
