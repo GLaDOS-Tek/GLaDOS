@@ -69,6 +69,7 @@ test-suite Glados-test
   other-modules:
       AstTests
       ParserTests
+      VmTests
   hs-source-dirs:
       test
   build-depends:
