@@ -50,6 +50,12 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glados-binary
+          path: ./glados
+
   push:
     runs-on: ubuntu-latest
     needs: [build]
