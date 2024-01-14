@@ -1,10 +1,3 @@
-{-
--- EPITECH PROJECT, 2024
--- Glados
--- File description:
--- Ast
--}
-
 module Ast (
     sourceToAst
 ) where

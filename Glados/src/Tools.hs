@@ -1,4 +1,9 @@
-module Tools (extractFromFile, multiElem, replaceChar, first) where
+module Tools (
+    extractFromFile,
+    multiElem,
+    replaceChar,
+    first
+) where
 
 -- IMPORTS
 

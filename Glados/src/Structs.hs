@@ -1,7 +1,15 @@
 module Structs (
   Env,
+  Stack,
+  Insts,
+  Args,
+  EnvVM,
+  FuncInsts,
+  ListArgs,
   Operator(..),
-  AstValue(..)
+  AstValue(..),
+  Value(..),
+  Instruction(..)
 ) where
 
 type Env = [(String, AstValue)]
@@ -12,7 +20,7 @@ type Insts = [Instruction]
 
 type Args = [Value]
 
-type EnvVm = [(String, Value)]
+type EnvVM = [(String, Value)]
 
 type FuncInsts = [Insts]
 
