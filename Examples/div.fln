@@ -1,12 +1,7 @@
-feed val 10
-
 cat div (a b) {
     if (b == 0) {
         0
     } else {
-        a / b
+        1 + (a / b)
     }
 }
-
-div (10 2)
-fact(5)
