@@ -27,6 +27,7 @@ library
   exposed-modules:
       Ast
       Bytecode
+      Compiler
       Error
       Parser
       Structs

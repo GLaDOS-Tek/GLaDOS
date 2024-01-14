@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Structs (
   Env,
   Stack,
@@ -11,6 +13,10 @@ module Structs (
   Value(..),
   Instruction(..)
 ) where
+
+import GHC.Generics
+import Data.Binary
+
 
 type Env = [(String, AstValue)]
 
@@ -40,7 +46,7 @@ data Operator =
     | And
     | Or
     | Not
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 data AstValue =
       AstNumber Int
@@ -64,7 +70,7 @@ data Value =
     | Operator Operator
     | Insts [Instruction]
     | Function Insts
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 data Instruction =
       Push Value
@@ -74,4 +80,8 @@ data Instruction =
     | JumpIfFalse Int
     | PushArg Int
     | PushEnv String
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
+
+instance Binary Value
+instance Binary Operator
+instance Binary Instruction

@@ -54,8 +54,14 @@ vmTests = hspec $ do
 
         --     let env = [("sum", Function sumFunction)]
 
+<<<<<<< HEAD
         --     let instructions = [Push (Numerical 5), PushEnv "sum", Call, Ret]
         --     let result = exec [] instructions [] env [] []
         --     result `shouldBe` Right (Numerical 15)
 
         
+=======
+            let instructions = [Push (Numerical 5), PushEnv "sum", Call, Ret]
+            let result = exec [] instructions [] env [] []
+            result `shouldBe` Right (Numerical 15)
+>>>>>>> 41a6a5c8dcac1246bdd679223541653239ee09db

@@ -3,3 +3,4 @@ Glados/stack.yaml.lock
 Glados/*~
 glados-*
 .vscode
+*.flno
