@@ -1,7 +1,8 @@
 module VmTests (vmTests) where
 
+import VM
 import Test.Hspec
-import Structs (Value(..), Operators(..), Instruction(..))
+import Structs (Value(..), Operator(..), Instruction(..))
 
 vmTests :: IO ()
 vmTests = hspec $ do

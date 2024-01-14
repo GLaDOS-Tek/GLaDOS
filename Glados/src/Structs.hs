@@ -64,7 +64,7 @@ data Value =
     | Operator Operator
     | Insts [Instruction]
     | Function Insts
-    deriving (Show)
+    deriving (Show, Eq)
 
 data Instruction =
       Push Value
@@ -74,4 +74,4 @@ data Instruction =
     | JumpIfFalse Int
     | PushArg Int
     | PushEnv String
-    deriving (Show)
+    deriving (Show, Eq)
