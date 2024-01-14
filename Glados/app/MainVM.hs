@@ -14,4 +14,5 @@ main = do
     (env, inst) <- readBinaryFromFile (args !! 0)
     case exec [] inst [] env [] [] of
         Left errorMsg -> putStrLn $ "Error: " ++ errorMsg
-        Right (Numercial result) -> print result
+        Right (Numerical result) -> print result
+        Right (Boolean result) -> print result

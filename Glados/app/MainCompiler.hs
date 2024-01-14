@@ -20,7 +20,7 @@ main = getArgs >>= \args ->
         [filepath] ->
             extractFromFile filepath >>= \content ->
                 case sourceToAst content of
-                    Just ast -> writeBinaryToFile "out.flno" ([], compileAst ast) >>
+                    Just ast -> writeBinaryToFile "out.flno" (compileAst ast) >>
                                 (putStrLn $ id "Glados 1.0.0 $> Source code successfully compiled.")
                     _ -> errorParams
         _ -> errorParams

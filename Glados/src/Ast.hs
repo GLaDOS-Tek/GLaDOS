@@ -23,13 +23,19 @@ parseOperator = parseWS *> parseOp <* parseWS
                 <|> Div <$ parseWord "/"
                 <|> Eq <$ parseWord "=="
                 <|> Ne <$ parseWord "!="
+                <|> Lt <$ parseWord "<"
+                <|> Le <$ parseWord "<="
+                <|> Gt <$ parseWord ">"
+                <|> Ge <$ parseWord ">="
+                <|> And <$ parseWord "&&"
+                <|> Or <$ parseWord "||"
 
 parseLiteralAst :: Parser AstValue
 parseLiteralAst = AstLiteral <$> (parseWS *> parseString <* parseWS)
 
 parseOperationAst :: Parser AstValue
 parseOperationAst = do
-    lhs <- parseWS *> parseNumberAst <|> parseSymbolAst
+    lhs <- parseWS *> parseBooleanAst <|> parseNumberAst <|> parseSymbolAst
     op <- parseWS *> parseOperator
     rhs <- parseWS *> parseAst
     return (AstBinaryOp op lhs rhs)
