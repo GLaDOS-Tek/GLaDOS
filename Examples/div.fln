@@ -1,0 +1,7 @@
+cat div (a b) {
+    if (b == 0) {
+        0
+    } else {
+        1 + (a / b)
+    }
+}

@@ -70,11 +70,3 @@ packages:
 local-bin-path: ../
 
 system-ghc: true
-
-# Enable code coverage with HPC
-test:
-  coverage:
-    enabled: true
-    hpc:
-      markup: true
-      expect-failure: true

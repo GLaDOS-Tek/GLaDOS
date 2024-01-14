@@ -1,9 +1,7 @@
 import ParserTests (parserTests)
-import AstTests (astTests)
-import EvalTests (evalTests)
+import VmTests (vmTests)
 
 main :: IO ()
 main = do
     parserTests
-    astTests
-    evalTests
+    vmTests

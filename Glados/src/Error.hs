@@ -1,4 +1,8 @@
-module Error (sendError, errorParams, exceptionMessage) where
+module Error (
+    sendError,
+    errorParams,
+    exceptionMessage
+) where
 
 -- IMPORTS
 
