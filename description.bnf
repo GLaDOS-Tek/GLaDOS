@@ -58,6 +58,6 @@ Extension : .fln
 
 <arithmetic-expression> ::= <expression> <operation> <expression>
 
-<new-function> ::= <function-definition> “;”
+<new-function> ::= <function-definition>
 
 <function-definition> ::= “cat” <identifier> “(“ <parameters> “)” “{“ <function-body> “}”
