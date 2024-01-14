@@ -8,12 +8,12 @@ vmTests :: IO ()
 vmTests = hspec $ do
     describe "Test the exec function" $ do
         it "executes a simple addition" $ do
-            let instructions = [Push (Numerical 2), Push (Numerical 3), Push (Operator Add), Ret]
+            let instructions = [Push (Numerical 2), Push (Numerical 3), Push (Operator Add), Call, Ret]
             let result = exec [] instructions [] [] [] []
             result `shouldBe` Right (Numerical 5)
 
         it "handles division by zero" $ do
-            let instructions = [Push (Numerical 2), Push (Numerical 0), Push (Operator Div), Ret]
+            let instructions = [Push (Numerical 2), Push (Numerical 0), Push (Operator Div), Call, Ret]
             let result = exec [] instructions [] [] [] []
             result `shouldBe` Left "Division by zero"
 
@@ -26,8 +26,8 @@ vmTests = hspec $ do
                      JumpIfFalse 2,
                      Push (Numerical 1),
                      Ret,
-                     Push (Numerical 1),
                      PushArg 0,
+                     Push (Numerical 1),
                      Push (Operator Sub),
                      Call,
                      Push (Function factFunction),
@@ -41,19 +41,31 @@ vmTests = hspec $ do
             let result = exec [] instructions [] [] [] []
             result `shouldBe` Right (Numerical 120)
         it "executes a function call from environment" $ do
-            let sumFunction =
-                    [Push (Numerical 0),
-                     PushArg 0,
-                     Push (Operator Eq),
-                     JumpIfFalse 2,
-                     Ret,
-                     PushArg 0,
+            let func2 =
+                    [PushArg 0,
+                    Push (Numerical 5),
+                    Push (Operator Add),
+                    Call,
+                    Ret]
+
+            let func =
+                    [PushArg 0,
+                    PushArg 1,
+                    Push (Operator Add),
+                    Call,
+                    PushEnv "fun2",
+                    Call,
+                    Ret]
+
+            let env = [("fun", Function func), ("fun2", Function func2)]
+            let instructions =
+                    [Push (Numerical 5),
+                     Push (Numerical 2),
+                     PushEnv "fun",
+                     Call,
+                     Push (Numerical 1),
                      Push (Operator Add),
                      Call,
                      Ret]
-
-            let env = [("sum", Function sumFunction)]
-
-            let instructions = [Push (Numerical 5), PushEnv "sum", Call, Ret]
             let result = exec [] instructions [] env [] []
-            result `shouldBe` Right (Numerical 15)
+            result `shouldBe` Right (Numerical 13)
